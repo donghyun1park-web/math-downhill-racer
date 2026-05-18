@@ -42,6 +42,16 @@ const FIRST_PERSON_MTB_VIEW = true;
 const FIRST_PERSON_SIMPLIFIED_TRACK = true;
 const COCKPIT_SCREEN_HEIGHT_RATIO = 0.27;
 const COCKPIT_FALLBACK_PRIORITY = "cockpit-png > cockpit-svg > rider-svg > graphics";
+const MATH_GATE_MIN_INTERVAL_MS = 7000;
+const MATH_GATE_MIN_DISTANCE = 260;
+const MATH_GATE_MAX_INTERVAL_MS = 13000;
+const MATH_GATE_STAGE_DENSITY = {
+  1: 0.76,
+  2: 0.92,
+  3: 0.82,
+  4: 0.96,
+  5: 0.9
+};
 const UI_SAFE_ZONES = {
   problemBanner: { topRatio: 0.055, bottomRatio: 0.16 },
   hud: { topFromBottom: 124 },
@@ -56,6 +66,8 @@ const DEBUG_STORAGE_ENABLED = new URLSearchParams(location.search).get("debugSto
   || localStorage.getItem("math-downhill-debug-storage") === "1";
 const DEBUG_MTB_READ_ENABLED = new URLSearchParams(location.search).get("debugMtbRead") === "1"
   || localStorage.getItem("math-downhill-debug-mtb-read") === "1";
+const DEBUG_RACE_FEEL_ENABLED = new URLSearchParams(location.search).get("debugRaceFeel") === "1"
+  || localStorage.getItem("math-downhill-debug-race-feel") === "1";
 const ASSETS = {
   mtbCockpitSvg: "assets/sprites/mtb_cockpit.svg",
   mtbCockpitGeneratedNormal: "assets/sprites/generated/mtb_cockpit_normal.png",
@@ -151,8 +163,33 @@ const state = {
   flashPulse: 0,
   boostPulse: 0,
   riderLandPulse: 0,
-  riderSlidePulse: 0
+  riderSlidePulse: 0,
+  raceFeel: createInitialRaceFeel()
 };
+
+function createInitialRaceFeel() {
+  return {
+    speed: 0,
+    targetSpeed: 0,
+    lateralVelocity: 0,
+    steering: 0,
+    traction: 1,
+    jumpY: 0,
+    jumpVelocity: 0,
+    jumpGravity: 2200,
+    jumpImpulse: 760,
+    isAirborne: false,
+    boostTime: 0,
+    slideTime: 0,
+    edgeSlowTime: 0,
+    landingTime: 0,
+    collisionTime: 0,
+    nextMathGateAt: 0,
+    lastMathGateDistance: 0,
+    pureRacingUntil: 0,
+    lastIceSegment: -1
+  };
+}
 
 const settingsPanel = document.querySelector("#settings-panel");
 const resetLearningButton = document.querySelector("#reset-learning");
@@ -317,6 +354,9 @@ function resetRun(stage) {
   state.boostPulse = 0;
   state.riderLandPulse = 0;
   state.riderSlidePulse = 0;
+  state.raceFeel = createInitialRaceFeel();
+  state.raceFeel.speed = state.speed;
+  state.raceFeel.targetSpeed = state.speed;
 }
 
 function resetTutorialRun() {
@@ -851,7 +891,12 @@ class RaceScene extends Phaser.Scene {
     this.createDebugTouchOverlay();
     this.createDebugPerfOverlay();
     this.createDebugMtbReadOverlay();
-    this.createGatePair(true);
+    this.createDebugRaceFeelOverlay();
+    if (state.mode === "tutorial") {
+      this.createGatePair(true);
+    } else {
+      this.scheduleNextMathGate(this.time.now, true);
+    }
     this.scale.on("resize", this.handleResize, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off("resize", this.handleResize, this);
@@ -2008,6 +2053,40 @@ class RaceScene extends Phaser.Scene {
       ].join("\n"));
   }
 
+  createDebugRaceFeelOverlay() {
+    if (!DEBUG_RACE_FEEL_ENABLED) return;
+    const y = DEBUG_TOUCH_ENABLED || DEBUG_MTB_READ_ENABLED ? 236 : 12;
+    this.debugRaceFeelText = this.add.text(12, y, "", {
+      fontFamily: "monospace",
+      fontSize: "11px",
+      color: "#ffd7a3",
+      backgroundColor: "rgba(2,8,21,0.72)",
+      padding: { x: 8, y: 6 }
+    }).setDepth(124);
+    this.updateDebugRaceFeelOverlay();
+  }
+
+  updateDebugRaceFeelOverlay() {
+    if (!this.debugRaceFeelText) return;
+    const raceFeel = state.raceFeel;
+    const nextMathGateIn = Math.max(0, Math.round((raceFeel.nextMathGateAt - this.time.now) / 1000));
+    const y = DEBUG_TOUCH_ENABLED || DEBUG_MTB_READ_ENABLED ? 236 : 12;
+    this.debugRaceFeelText
+      .setPosition(12, y)
+      .setText([
+        "debugRaceFeel=1",
+        `speed ${raceFeel.speed.toFixed(1)}`,
+        `target ${raceFeel.targetSpeed.toFixed(1)}`,
+        `lateral ${raceFeel.lateralVelocity.toFixed(2)}`,
+        `traction ${raceFeel.traction.toFixed(2)}`,
+        `airborne ${raceFeel.isAirborne}`,
+        `boostTime ${raceFeel.boostTime.toFixed(2)}`,
+        `slideTime ${raceFeel.slideTime.toFixed(2)}`,
+        `nextMathGateIn ${nextMathGateIn}s`,
+        `lastGateDist ${Math.round(state.distance - raceFeel.lastMathGateDistance)}`
+      ].join("\n"));
+  }
+
   setLane(nextLane) {
     this.lane = Phaser.Math.Clamp(nextLane, 0, DESIGN.laneCount - 1);
     this.tweens.add({
@@ -2120,11 +2199,10 @@ class RaceScene extends Phaser.Scene {
     state.riderLandPulse = Math.max(0, state.riderLandPulse - dt * 5.4);
     state.riderSlidePulse = Math.max(0, state.riderSlidePulse - dt * 3.2);
     if (state.hudPulse <= 0 && state.boostPulse <= 0) this.setHudVisualState("normal");
-    this.drawRider(this.lane - 1);
 
-    const speedFactor = state.mode === "tutorial" ? 0.74 + state.boost / 120 : 1 + state.boost / 82 + state.speedKick / 110 + (state.stage.id - 1) * 0.035;
-    const targetSpeed = state.mode === "tutorial" ? 48 + state.boost * 0.45 : state.stage.baseSpeed + 22 + state.combo * 5 + state.boost * 0.92 + state.speedKick;
-    state.speed = Phaser.Math.Linear(state.speed, targetSpeed, 0.055);
+    this.updateRaceFeel(delta);
+    const raceFeel = state.raceFeel;
+    const speedFactor = state.mode === "tutorial" ? 0.74 + state.boost / 120 : Phaser.Math.Clamp(raceFeel.speed / 82, 0.58, 2.05);
     state.distance = Math.min(state.stage.targetDistance, state.distance + delta * 0.036 * speedFactor);
 
     this.updateParallaxLayers(delta, speedFactor);
@@ -2136,6 +2214,7 @@ class RaceScene extends Phaser.Scene {
     this.updateDebugTouchOverlay();
     this.updateDebugPerfOverlay(delta);
     this.updateDebugMtbReadOverlay();
+    this.updateDebugRaceFeelOverlay();
 
     if (state.mode === "tutorial") {
       return;
@@ -2147,6 +2226,122 @@ class RaceScene extends Phaser.Scene {
       this.finishRun(false, "Temperature dropped too low");
     } else if (state.grillTemp >= OVERHEAT_LIMIT) {
       this.finishRun(false, "Grill overheated");
+    }
+  }
+
+  updateRaceFeel(delta) {
+    const dt = delta / 1000;
+    this.applyBoostFeel(dt);
+    this.applySurfaceFeel(dt);
+    this.applyCollisionFeel(dt);
+    this.applySteering(dt);
+    this.applyJumpFeel(dt);
+
+    const raceFeel = state.raceFeel;
+    const stageBoost = (state.stage.id - 1) * 4;
+    const normalBase = state.mode === "tutorial" ? 48 : state.stage.baseSpeed + 32 + stageBoost;
+    const comboBonus = state.mode === "tutorial" ? 0 : Math.min(state.combo * 4, 22);
+    const boostBonus = state.boost * (state.mode === "tutorial" ? 0.45 : 0.72);
+    const kickBonus = state.speedKick * 0.32;
+    const edgePenalty = raceFeel.edgeSlowTime > 0 ? 24 : 0;
+    const slidePenalty = raceFeel.slideTime > 0 ? 10 : 0;
+    const collisionPenalty = raceFeel.collisionTime > 0 ? 26 : 0;
+    const targetSpeed = Phaser.Math.Clamp(normalBase + comboBonus + boostBonus + kickBonus - edgePenalty - slidePenalty - collisionPenalty, 45, state.boost > 8 ? 172 : 118 + stageBoost);
+    raceFeel.targetSpeed = targetSpeed;
+    const ease = 1 - Math.pow(0.001, dt);
+    raceFeel.speed = Phaser.Math.Linear(raceFeel.speed || state.speed || targetSpeed, raceFeel.targetSpeed, ease * 0.42);
+    state.speed = raceFeel.speed;
+  }
+
+  applySteering(dt) {
+    const raceFeel = state.raceFeel;
+    const inputDirection = this.getSteeringInputDirection();
+    const speedSteeringFactor = Phaser.Math.Clamp(1.16 - raceFeel.speed / 220, 0.48, 1);
+    const boostWeight = state.boost > 8 ? 0.82 : 1;
+    const steeringPower = 18 * raceFeel.traction * speedSteeringFactor * boostWeight;
+    raceFeel.steering = Phaser.Math.Linear(raceFeel.steering, inputDirection, Math.min(1, dt * 8));
+    raceFeel.lateralVelocity += inputDirection * steeringPower * dt;
+    const damping = raceFeel.traction < 0.8 ? 0.965 : 0.89;
+    raceFeel.lateralVelocity *= Math.pow(damping, dt * 60);
+    raceFeel.lateralVelocity = Phaser.Math.Clamp(raceFeel.lateralVelocity, -8, 8);
+
+    const targetX = this.laneToX(this.lane);
+    const inertialX = Phaser.Math.Clamp(targetX + raceFeel.lateralVelocity * 7, 36, this.scale.width - 36);
+    this.rider?.setX(Phaser.Math.Linear(this.rider.x, inertialX, Math.min(1, dt * 11)));
+    this.applyEdgeSlowFeel();
+    this.drawRider(this.getRaceFeelLean());
+  }
+
+  getSteeringInputDirection() {
+    const touchDirection = (this.activeTouches.right.size > 0 ? 1 : 0) - (this.activeTouches.left.size > 0 ? 1 : 0);
+    if (touchDirection !== 0) return touchDirection;
+    return Phaser.Math.Clamp(this.lane - 1, -1, 1) * 0.35;
+  }
+
+  getRaceFeelLean() {
+    const raceFeel = state.raceFeel;
+    const slideWobble = raceFeel.slideTime > 0 ? Math.sin(this.time.now * 0.028) * 0.28 : 0;
+    return Phaser.Math.Clamp(raceFeel.lateralVelocity / 7 + slideWobble, -1, 1);
+  }
+
+  applyBoostFeel(dt) {
+    const raceFeel = state.raceFeel;
+    raceFeel.boostTime = state.boost > 8 || state.boostPulse > 0 ? Math.max(raceFeel.boostTime, 0.5) : Math.max(0, raceFeel.boostTime - dt);
+  }
+
+  applyJumpFeel(dt) {
+    const raceFeel = state.raceFeel;
+    if (raceFeel.isAirborne) {
+      raceFeel.jumpVelocity += raceFeel.jumpGravity * dt;
+      raceFeel.jumpY += raceFeel.jumpVelocity * dt;
+      if (raceFeel.jumpY >= 0) {
+        raceFeel.jumpY = 0;
+        raceFeel.jumpVelocity = 0;
+        raceFeel.isAirborne = false;
+        raceFeel.landingTime = 0.18;
+        this.landJump();
+      }
+    }
+    raceFeel.landingTime = Math.max(0, raceFeel.landingTime - dt);
+    if (this.rider && raceFeel.isAirborne) {
+      this.rider.y = this.getRiderBaseY() + raceFeel.jumpY * 0.22;
+    } else if (this.rider && raceFeel.landingTime > 0) {
+      this.rider.y = this.getRiderBaseY() + Math.sin((0.18 - raceFeel.landingTime) * 34) * 5;
+    } else if (this.rider && !state.jumping) {
+      this.rider.y = Phaser.Math.Linear(this.rider.y, this.getRiderBaseY(), Math.min(1, dt * 12));
+    }
+  }
+
+  applySurfaceFeel(dt) {
+    const raceFeel = state.raceFeel;
+    const iceSegment = Math.floor(state.distance / 340);
+    const iceWindow = state.stage.id === 3 || state.stage.weather === "ice";
+    if (iceWindow && iceSegment > 0 && iceSegment !== raceFeel.lastIceSegment && state.distance % 340 > 128 && state.distance % 340 < 158) {
+      raceFeel.lastIceSegment = iceSegment;
+      raceFeel.slideTime = Math.max(raceFeel.slideTime, 0.95);
+      raceFeel.lateralVelocity += Phaser.Math.FloatBetween(-1.8, 1.8);
+      state.warningPulse = Math.max(state.warningPulse, 0.45);
+      feedback.trigger("wrong");
+    }
+    raceFeel.slideTime = Math.max(0, raceFeel.slideTime - dt);
+    const targetTraction = raceFeel.slideTime > 0 ? 0.46 : 1;
+    raceFeel.traction = Phaser.Math.Linear(raceFeel.traction, targetTraction, raceFeel.slideTime > 0 ? 0.22 : Math.min(1, dt * 1.5));
+    if (raceFeel.slideTime > 0) state.riderSlidePulse = Math.max(state.riderSlidePulse, 0.45);
+  }
+
+  applyCollisionFeel(dt) {
+    const raceFeel = state.raceFeel;
+    raceFeel.collisionTime = Math.max(0, raceFeel.collisionTime - dt);
+    raceFeel.edgeSlowTime = Math.max(0, raceFeel.edgeSlowTime - dt);
+  }
+
+  applyEdgeSlowFeel() {
+    const raceFeel = state.raceFeel;
+    const center = this.scale.width / 2;
+    const normalized = Math.abs((this.rider?.x ?? center) - center) / (this.scale.width * 0.38);
+    if (normalized > 0.86) {
+      raceFeel.edgeSlowTime = Math.max(raceFeel.edgeSlowTime, 0.34);
+      state.warningPulse = Math.max(state.warningPulse, 0.35);
     }
   }
 
@@ -2402,11 +2597,45 @@ class RaceScene extends Phaser.Scene {
       }
     }
 
-    this.spawnTimer -= delta;
-    if (this.gates.length === 0 || this.spawnTimer <= 0) {
-      this.createGatePair();
-      this.spawnTimer = Math.max(940, (1650 - state.combo * 45 - state.boost * 4) / state.stage.gateRate);
+    if (state.mode === "tutorial") {
+      this.spawnTimer -= delta;
+      if (this.gates.length === 0 || this.spawnTimer <= 0) {
+        this.createGatePair();
+        this.spawnTimer = Math.max(940, (1650 - state.combo * 45 - state.boost * 4) / state.stage.gateRate);
+      }
+      return;
     }
+
+    if (this.gates.length === 0 && this.canSpawnMathGate(this.time.now, state.distance)) {
+      this.spawnMathGateEvent();
+    }
+  }
+
+  canSpawnMathGate(now, distance) {
+    const raceFeel = state.raceFeel;
+    if (state.mode === "tutorial") return true;
+    if (raceFeel.isAirborne || raceFeel.landingTime > 0 || state.jumping) return false;
+    if (raceFeel.boostTime > 0.15 || now < raceFeel.pureRacingUntil) return false;
+    if (now < raceFeel.nextMathGateAt) return false;
+    if (distance - raceFeel.lastMathGateDistance < MATH_GATE_MIN_DISTANCE) return false;
+    return true;
+  }
+
+  scheduleNextMathGate(now = this.time.now, initial = false) {
+    const density = MATH_GATE_STAGE_DENSITY[state.stage.id] || 0.88;
+    const stageGateRate = Math.max(0.7, state.stage.gateRate || 1);
+    const minInterval = MATH_GATE_MIN_INTERVAL_MS / density / stageGateRate;
+    const maxInterval = MATH_GATE_MAX_INTERVAL_MS / density / stageGateRate;
+    const interval = initial
+      ? Math.max(4200, minInterval * 0.72)
+      : Phaser.Math.Between(Math.round(minInterval), Math.round(maxInterval));
+    state.raceFeel.nextMathGateAt = now + interval;
+  }
+
+  spawnMathGateEvent() {
+    this.createGatePair();
+    state.raceFeel.lastMathGateDistance = state.distance;
+    this.scheduleNextMathGate(this.time.now);
   }
 
   isGateInCatchWindow(gate) {
@@ -2431,7 +2660,9 @@ class RaceScene extends Phaser.Scene {
     }
     this.gates.forEach((item) => item.destroy());
     this.gates = [];
-    this.spawnTimer = 360;
+    state.raceFeel.lastMathGateDistance = state.distance;
+    state.raceFeel.pureRacingUntil = this.time.now + 2200;
+    this.scheduleNextMathGate(this.time.now);
   }
 
   applyCorrectReward() {
@@ -2447,6 +2678,8 @@ class RaceScene extends Phaser.Scene {
     state.boost = Math.min(100, state.boost + 25);
     state.grillTemp = Math.min(OVERHEAT_LIMIT + 8, state.grillTemp + 5);
     state.speedKick = Math.min(70, state.speedKick + 20);
+    state.raceFeel.boostTime = Math.max(state.raceFeel.boostTime, 1.1);
+    state.raceFeel.pureRacingUntil = this.time.now + 2600;
     this.setHudVisualState("correct");
     state.hudPulse = 1;
     state.flashPulse = 1;
@@ -2481,6 +2714,8 @@ class RaceScene extends Phaser.Scene {
     state.grillTemp = Math.max(0, state.grillTemp - 18);
     state.speed = Math.max(42, state.speed - 24);
     state.speedKick = 0;
+    state.raceFeel.collisionTime = Math.max(state.raceFeel.collisionTime, 0.38);
+    state.raceFeel.lateralVelocity *= -0.32;
     this.setHudVisualState("cold");
     state.hudPulse = 0.7;
     state.warningPulse = 1;
@@ -2496,6 +2731,8 @@ class RaceScene extends Phaser.Scene {
     state.wrongStreak = 0;
     state.grillTemp = Math.min(OVERHEAT_LIMIT + 8, state.grillTemp + 4);
     state.speedKick = Math.min(90, state.speedKick + 34);
+    state.raceFeel.boostTime = Math.max(state.raceFeel.boostTime, 1.45);
+    state.raceFeel.pureRacingUntil = this.time.now + 3200;
     this.setHudVisualState("boost");
     state.hudPulse = 1;
     state.boostPulse = 1;
@@ -2526,6 +2763,9 @@ class RaceScene extends Phaser.Scene {
     this.jumpCooldown = 920;
     state.jumping = true;
     state.airBonusReady = true;
+    state.raceFeel.isAirborne = true;
+    state.raceFeel.jumpY = 0;
+    state.raceFeel.jumpVelocity = -state.raceFeel.jumpImpulse;
     feedback.trigger("jump");
     this.drawRider(this.lane - 1);
     this.flashText(autoReward ? "COMBO JUMP" : "AIR TIME", 0xffffff);
@@ -2535,33 +2775,6 @@ class RaceScene extends Phaser.Scene {
         this.finishTutorial();
       });
     }
-    this.tweens.add({
-      targets: this.rider,
-      y: this.getRiderBaseY() - this.scale.height * 0.18,
-      scale: 1.14,
-      duration: 235,
-      ease: "Quad.easeOut",
-      onUpdate: () => {
-        const lift = Phaser.Math.Clamp((this.getRiderBaseY() - this.rider.y) / (this.scale.height * 0.18), 0, 1);
-        this.shadow.setScale(1 - lift * 0.46, 1 - lift * 0.62);
-        this.shadow.setAlpha(0.34 - lift * 0.19);
-      },
-      onComplete: () => {
-        this.tweens.add({
-          targets: this.rider,
-          y: this.getRiderBaseY(),
-          scale: 1,
-          duration: 245,
-          ease: "Quad.easeIn",
-          onUpdate: () => {
-            const lift = Phaser.Math.Clamp((this.getRiderBaseY() - this.rider.y) / (this.scale.height * 0.18), 0, 1);
-            this.shadow.setScale(1 - lift * 0.46, 1 - lift * 0.62);
-            this.shadow.setAlpha(0.34 - lift * 0.19);
-          },
-          onComplete: () => this.landJump()
-        });
-      }
-    });
   }
 
   landJump() {
