@@ -43,6 +43,17 @@ test("main.js defines generated cockpit PNG paths and preload keys", () => {
   }
 });
 
+test("generated cockpit PNG assets are present and lightweight enough for PWA use", () => {
+  for (const path of cockpitPngs) {
+    const fileUrl = new URL(path, root);
+    assert.equal(existsSync(fileUrl), true, `${path} should exist`);
+    const buffer = readFileSync(fileUrl);
+    assert.equal(buffer.subarray(1, 4).toString("ascii"), "PNG");
+    assert.ok(buffer.length < 1_000_000, `${path} should stay below 1MB`);
+    assert.equal(buffer[25], 6, `${path} should be RGBA with transparency`);
+  }
+});
+
 test("main.js exposes cockpit mode, state, motion, and debug readout", () => {
   const main = read("src/main.js");
   assert.match(main, /visualMode\s*=\s*'cockpit-png'|"cockpit-png"|cockpit-png/);
