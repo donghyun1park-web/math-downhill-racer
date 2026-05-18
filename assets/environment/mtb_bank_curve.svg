@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150" role="img" aria-labelledby="title">
+  <title id="title">Banked downhill MTB curve snow berm</title>
+  <g id="mtb-bank-curve">
+    <path d="M15 112C79 37 187 21 266 44c-53 38-91 65-126 80-43 18-82 16-125-12z" fill="#dff8ff" opacity=".9"/>
+    <path d="M24 108C91 54 178 35 248 47" fill="none" stroke="#35d4ff" stroke-width="7" opacity=".55"/>
+    <path d="M49 113C114 77 170 63 226 64" fill="none" stroke="#07111f" stroke-width="6" opacity=".25"/>
+    <path d="M210 51l24-3M191 64l27-1" stroke="#ff7a18" stroke-width="5"/>
+  </g>
+</svg>

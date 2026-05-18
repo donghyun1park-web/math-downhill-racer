@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 90" role="img" aria-labelledby="title">
+  <title id="title">MTB course tape with blue and orange race markers</title>
+  <g id="mtb-track-tape" fill="none" stroke-linecap="round">
+    <path d="M12 52C72 16 174 76 248 28" stroke="#f6fbff" stroke-width="10"/>
+    <path d="M12 52C72 16 174 76 248 28" stroke="#35d4ff" stroke-width="4" stroke-dasharray="24 18"/>
+    <path d="M31 43v34M105 48v34M183 47v34M236 31v34" stroke="#07111f" stroke-width="7"/>
+    <path d="M31 43v34M105 48v34M183 47v34M236 31v34" stroke="#ff7a18" stroke-width="4"/>
+  </g>
+</svg>

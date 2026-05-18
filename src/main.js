@@ -48,6 +48,9 @@ const ASSETS = {
   rider: "assets/sprites/rider.svg",
   riderBoost: "assets/sprites/rider_boost.svg",
   riderJump: "assets/sprites/rider_jump.svg",
+  riderMtb: "assets/sprites/rider_mtb_large.svg",
+  riderMtbBoost: "assets/sprites/rider_mtb_boost_large.svg",
+  riderMtbJump: "assets/sprites/rider_mtb_jump_large.svg",
   bikeShadow: "assets/sprites/bike_shadow.svg",
   boostFlame: "assets/sprites/boost_flame.svg",
   pineTree: "assets/environment/pine_tree.svg",
@@ -71,6 +74,11 @@ const ASSETS = {
   courseArrow: "assets/environment/course_arrow.svg",
   courseFence: "assets/environment/course_fence.svg",
   mountainLayer: "assets/environment/mountain_layer.svg",
+  mtbTrackTape: "assets/environment/mtb_track_tape.svg",
+  mtbJumpRamp: "assets/environment/mtb_jump_ramp.svg",
+  mtbTireTracks: "assets/environment/mtb_tire_tracks.svg",
+  mtbBankCurve: "assets/environment/mtb_bank_curve.svg",
+  mtbCourseMarker: "assets/environment/mtb_course_marker.svg",
   boostSpark: "assets/effects/boost_spark.svg"
 };
 
@@ -352,6 +360,9 @@ class BootScene extends Phaser.Scene {
     this.load.svg("rider", ASSETS.rider);
     this.load.svg("riderBoost", ASSETS.riderBoost);
     this.load.svg("riderJump", ASSETS.riderJump);
+    this.load.svg("riderMtb", ASSETS.riderMtb);
+    this.load.svg("riderMtbBoost", ASSETS.riderMtbBoost);
+    this.load.svg("riderMtbJump", ASSETS.riderMtbJump);
     this.load.svg("bikeShadow", ASSETS.bikeShadow);
     this.load.svg("boostFlame", ASSETS.boostFlame);
     this.load.svg("pineTree", ASSETS.pineTree);
@@ -375,6 +386,11 @@ class BootScene extends Phaser.Scene {
     this.load.svg("courseArrow", ASSETS.courseArrow);
     this.load.svg("courseFence", ASSETS.courseFence);
     this.load.svg("mountainLayer", ASSETS.mountainLayer);
+    this.load.svg("mtbTrackTape", ASSETS.mtbTrackTape);
+    this.load.svg("mtbJumpRamp", ASSETS.mtbJumpRamp);
+    this.load.svg("mtbTireTracks", ASSETS.mtbTireTracks);
+    this.load.svg("mtbBankCurve", ASSETS.mtbBankCurve);
+    this.load.svg("mtbCourseMarker", ASSETS.mtbCourseMarker);
     this.load.svg("boostSpark", ASSETS.boostSpark);
   }
 
@@ -429,7 +445,7 @@ class TutorialIntroScene extends Phaser.Scene {
       fontSize: "13px",
       color: "#9ee7ff"
     }).setOrigin(0.5);
-    drawRiderSilhouette(this, centerX + 62, height * 0.42);
+    drawMtbTitleHero(this, centerX, height * 0.39);
     this.add.text(centerX, height - 296, "Practice for 30 seconds,\nthen start the real race.", {
       fontFamily: "Arial Black, Arial",
       fontSize: "20px",
@@ -500,7 +516,7 @@ class MenuScene extends Phaser.Scene {
       fontSize: "13px",
       color: "#9ee7ff"
     }).setOrigin(0.5);
-    drawRiderSilhouette(this, centerX + 62, height * 0.42);
+    drawMtbTitleHero(this, centerX, height * 0.39);
     this.createStageCards();
     this.createMenuButton(centerX, height - 210, "START", "buttonStart", () => {
       feedback.trigger("uiClick");
@@ -783,22 +799,25 @@ class RaceScene extends Phaser.Scene {
     this.snow = [];
     this.props = [];
     this.speedLines = [];
+    this.courseTape = [];
+    this.rampProps = [];
     this.sky = this.add.graphics();
     this.mountainBack = this.add.graphics();
     this.track = this.add.graphics();
+    this.trackTapeFx = this.add.graphics().setDepth(6);
     this.trackFx = this.add.graphics();
     this.riderFx = this.add.graphics().setDepth(16);
     this.feedbackFx = this.add.graphics().setDepth(70);
     this.speedFx = this.add.graphics().setDepth(18);
 
-    for (let i = 0; i < 30; i += 1) {
-      const line = this.add.rectangle(0, 0, 86, 2, 0xe8f6ff, 0.2).setOrigin(0.5).setDepth(4);
+    for (let i = 0; i < 34; i += 1) {
+      const line = this.add.rectangle(0, 0, 92, 3, 0xe8f6ff, 0.2).setOrigin(0.5).setDepth(4);
       this.trackLines.push(line);
     }
 
     const lowEffects = state.performance.lowEffectsMode;
     const snowCount = lowEffects ? 22 : 46;
-    const propCount = lowEffects ? 10 : 18;
+    const propCount = lowEffects ? 12 : 24;
     const speedLineCount = lowEffects ? 8 : 18;
 
     for (let i = 0; i < snowCount; i += 1) {
@@ -816,8 +835,21 @@ class RaceScene extends Phaser.Scene {
       const prop = this.hasTexture("pineTree") ? this.add.image(0, 0, "pineTree").setDepth(7) : this.add.graphics().setDepth(7);
       prop.setData("side", i % 2 === 0 ? -1 : 1);
       prop.setData("offset", i * 82);
-      prop.setData("kind", i % 6);
+      prop.setData("kind", i % 10);
       this.props.push(prop);
+    }
+
+    for (let i = 0; i < 8; i += 1) {
+      const tape = this.hasTexture("mtbTrackTape") ? this.add.image(0, 0, "mtbTrackTape").setDepth(8) : this.add.graphics().setDepth(8);
+      tape.setData("side", i % 2 === 0 ? -1 : 1);
+      tape.setData("offset", i * 118);
+      this.courseTape.push(tape);
+    }
+
+    for (let i = 0; i < 3; i += 1) {
+      const ramp = this.hasTexture("mtbJumpRamp") ? this.add.image(0, 0, "mtbJumpRamp").setDepth(9) : this.add.graphics().setDepth(9);
+      ramp.setData("offset", i * 320 + 210);
+      this.rampProps.push(ramp);
     }
 
     for (let i = 0; i < speedLineCount; i += 1) {
@@ -836,6 +868,8 @@ class RaceScene extends Phaser.Scene {
     this.snow.forEach((item, index) => item.setVisible(!lowEffects || index < 22));
     this.props.forEach((item, index) => item.setVisible(!lowEffects || index < 10));
     this.speedLines.forEach((item, index) => item.setVisible(!lowEffects || index < 8));
+    this.courseTape.forEach((item, index) => item.setVisible(!lowEffects || index < 4));
+    this.rampProps.forEach((item, index) => item.setVisible(!lowEffects || index < 1));
   }
 
   drawWorld() {
@@ -858,33 +892,54 @@ class RaceScene extends Phaser.Scene {
     this.mountainBack.fillTriangle(width * 0.62, height * 0.16, width * 0.7, height * 0.1, width * 0.8, height * 0.22);
 
     this.track.clear();
-    this.track.fillStyle(0x11263a, 1);
+    const horizonY = height * 0.34;
+    this.track.fillStyle(0xe7f5ff, 0.42);
     this.track.beginPath();
-    this.track.moveTo(cx - 52, height * 0.42);
-    this.track.lineTo(cx + 52, height * 0.42);
-    this.track.lineTo(width + 76, height);
-    this.track.lineTo(-76, height);
+    this.track.moveTo(cx - 76, horizonY - 8);
+    this.track.lineTo(cx + 76, horizonY - 8);
+    this.track.lineTo(width + 102, height);
+    this.track.lineTo(-102, height);
     this.track.closePath();
     this.track.fillPath();
 
-    this.track.lineStyle(2, 0x7ee8ff, 0.26);
-    for (let i = -1; i <= 1; i += 1) {
-      this.track.lineBetween(cx + i * 34, height * 0.43, cx + i * 116, height);
+    this.track.fillStyle(0x11263a, 1);
+    this.track.beginPath();
+    this.track.moveTo(cx - 44, horizonY);
+    this.track.lineTo(cx + 44, horizonY);
+    this.track.lineTo(width + 36, height);
+    this.track.lineTo(-36, height);
+    this.track.closePath();
+    this.track.fillPath();
+
+    this.track.lineStyle(2, 0x7ee8ff, 0.22);
+    for (let i = -2; i <= 2; i += 1) {
+      this.track.lineBetween(cx + i * 21, horizonY + 4, cx + i * 96, height);
     }
 
-    this.track.lineStyle(4, 0xfff4b8, 0.44);
-    this.track.lineBetween(cx - 74, height * 0.47, -20, height * 0.85);
-    this.track.lineBetween(cx + 74, height * 0.47, width + 20, height * 0.85);
+    this.track.lineStyle(6, 0xfff4b8, 0.48);
+    this.track.lineBetween(cx - 68, horizonY + 46, -18, height * 0.86);
+    this.track.lineBetween(cx + 68, horizonY + 46, width + 18, height * 0.86);
+    this.track.lineStyle(3, 0xff7a18, 0.56);
+    this.track.lineBetween(cx - 82, horizonY + 60, -36, height * 0.9);
+    this.track.lineBetween(cx + 82, horizonY + 60, width + 36, height * 0.9);
+
+    if (this.hasTexture("mtbTireTracks")) {
+      this.tireTrackLeft?.destroy();
+      this.tireTrackRight?.destroy();
+      this.tireTrackLeft = this.add.image(cx - 44, height * 0.65, "mtbTireTracks").setDisplaySize(82, height * 0.48).setDepth(5).setAlpha(0.44);
+      this.tireTrackRight = this.add.image(cx + 44, height * 0.65, "mtbTireTracks").setDisplaySize(82, height * 0.48).setDepth(5).setAlpha(0.44).setFlipX(true);
+    }
   }
 
   createRider() {
     const { width, height } = this.scale;
-    this.rider = this.add.container(width / 2, height * 0.76).setDepth(20);
-    this.flame = this.hasTexture("boostFlame") ? this.add.image(-62, 28, "boostFlame").setDisplaySize(46, 72).setAlpha(0) : this.add.graphics();
+    this.rider = this.add.container(width / 2, height * 0.79).setDepth(20);
+    this.flame = this.hasTexture("boostFlame") ? this.add.image(-82, 18, "boostFlame").setDisplaySize(72, 104).setAlpha(0) : this.add.graphics();
     this.shadow = this.hasTexture("bikeShadow")
-      ? this.add.image(0, 58, "bikeShadow").setDisplaySize(100, 25).setAlpha(0.78)
-      : this.add.ellipse(0, 58, 92, 20, 0x000000, 0.34);
-    this.riderSprite = this.hasTexture("rider") ? this.add.image(0, 0, "rider").setDisplaySize(146, 122) : null;
+      ? this.add.image(0, 74, "bikeShadow").setDisplaySize(178, 38).setAlpha(0.78)
+      : this.add.ellipse(0, 74, 166, 28, 0x000000, 0.34);
+    const riderTexture = this.hasTexture("riderMtb") ? "riderMtb" : "rider";
+    this.riderSprite = this.hasTexture(riderTexture) ? this.add.image(0, 0, riderTexture).setDisplaySize(232, 168) : null;
     this.bike = this.riderSprite ? null : this.add.graphics();
     this.body = this.riderSprite ? null : this.add.graphics();
     this.rider.add([this.flame, this.shadow, this.riderSprite, this.bike, this.body].filter(Boolean));
@@ -893,8 +948,13 @@ class RaceScene extends Phaser.Scene {
 
   drawRider(lean) {
     if (this.riderSprite) {
-      const key = state.jumping ? "riderJump" : state.boost > 8 || state.boostPulse > 0 ? "riderBoost" : "rider";
+      const key = state.jumping
+        ? (this.hasTexture("riderMtbJump") ? "riderMtbJump" : "riderJump")
+        : state.boost > 8 || state.boostPulse > 0
+          ? (this.hasTexture("riderMtbBoost") ? "riderMtbBoost" : "riderBoost")
+          : (this.hasTexture("riderMtb") ? "riderMtb" : "rider");
       if (this.hasTexture(key) && this.riderSprite.texture.key !== key) this.riderSprite.setTexture(key);
+      this.riderSprite.setDisplaySize(state.jumping ? 238 : state.boost > 8 || state.boostPulse > 0 ? 254 : 232, state.jumping ? 174 : 168);
       this.riderSprite.setAngle(lean * 5);
       return;
     }
@@ -935,34 +995,34 @@ class RaceScene extends Phaser.Scene {
     this.rpm = this.add.graphics();
     this.dashCluster = this.add.graphics();
     this.problemPanel = this.hasTexture("problemBanner")
-      ? this.add.image(this.scale.width / 2, 104, "problemBanner").setDisplaySize(this.scale.width - 24, 98).setAlpha(0.96)
+      ? this.add.image(this.scale.width / 2, 88, "problemBanner").setDisplaySize(this.scale.width - 34, 82).setAlpha(0.94)
       : null;
     this.hudPanel = this.hasTexture("speedometerPanel")
-      ? this.add.image(this.scale.width / 2, this.scale.height - 104, "speedometerPanel").setDisplaySize(this.scale.width - 16, 132).setAlpha(0.92)
+      ? this.add.image(this.scale.width / 2, this.scale.height - 86, "speedometerPanel").setDisplaySize(this.scale.width - 24, 108).setAlpha(0.86)
       : null;
     this.boostIcon = this.hasTexture("boostIcon") ? this.add.image(34, 142, "boostIcon").setDisplaySize(18, 18) : null;
     this.tempIcon = this.hasTexture("tempIcon") ? this.add.image(this.scale.width - 166, 105, "tempIcon").setDisplaySize(16, 16) : null;
     this.hud.add([this.problemPanel, this.hudPanel, this.hudBg, this.rpm, this.dashCluster, this.boostIcon, this.tempIcon].filter(Boolean));
 
-    this.speedText = this.add.text(this.scale.width / 2, this.scale.height - 124, "064", {
+    this.speedText = this.add.text(this.scale.width / 2, this.scale.height - 104, "064", {
       fontFamily: "Arial Black, Arial",
-      fontSize: "54px",
+      fontSize: "44px",
       color: "#f6fbff"
     }).setOrigin(0.5);
-    this.speedUnit = this.add.text(this.scale.width / 2, this.scale.height - 82, "KM/H", {
+    this.speedUnit = this.add.text(this.scale.width / 2, this.scale.height - 70, "KM/H", {
       fontFamily: "monospace",
       fontSize: "13px",
       color: "#7ee8ff"
     }).setOrigin(0.5);
-    this.questionText = this.add.text(this.scale.width / 2, 78, "PASS THE ANSWER GATE", {
+    this.questionText = this.add.text(this.scale.width / 2, 64, "PASS THE ANSWER GATE", {
       fontFamily: "Arial Black, Arial",
-      fontSize: "25px",
+      fontSize: "23px",
       color: "#eef8ff",
       stroke: "#020815",
       strokeThickness: 6,
       align: "center"
     }).setOrigin(0.5, 0);
-    this.statusText = this.add.text(this.scale.width / 2, this.scale.height - 52, "BOOST READY", {
+    this.statusText = this.add.text(this.scale.width / 2, this.scale.height - 43, "BOOST READY", {
       fontFamily: "monospace",
       fontSize: "12px",
       color: "#35d4ff"
@@ -972,17 +1032,17 @@ class RaceScene extends Phaser.Scene {
       fontSize: "27px",
       color: "#ffffff"
     }).setOrigin(1, 0);
-    this.comboText = this.add.text(22, this.scale.height - 146, "COMBO x0", {
+    this.comboText = this.add.text(22, this.scale.height - 124, "COMBO x0", {
       fontFamily: "monospace",
       fontSize: "12px",
       color: "#ffcf54"
     }).setOrigin(0, 0);
-    this.tempText = this.add.text(this.scale.width - 22, this.scale.height - 146, "TEMP 62C", {
+    this.tempText = this.add.text(this.scale.width - 22, this.scale.height - 124, "TEMP 62C", {
       fontFamily: "monospace",
       fontSize: "11px",
       color: "#9ee7ff"
     }).setOrigin(1, 0);
-    this.clusterText = this.add.text(this.scale.width - 22, this.scale.height - 174, "RPM\nBOOST 00\nTEMP 62", {
+    this.clusterText = this.add.text(this.scale.width - 22, this.scale.height - 148, "RPM\nBOOST 00\nTEMP 62", {
       fontFamily: "monospace",
       fontSize: "11px",
       color: "#dff8ff",
@@ -1070,13 +1130,13 @@ class RaceScene extends Phaser.Scene {
 
     this.hudBg.clear();
     this.hudBg.fillStyle(0x020815, 0.42);
-    this.hudBg.fillRoundedRect(18, 54, width - 36, 96, 8);
+    this.hudBg.fillRoundedRect(24, 48, width - 48, 78, 8);
     this.hudBg.lineStyle(2, hudColor, 0.45 + state.hudPulse * 0.28);
-    this.hudBg.strokeRoundedRect(18, 54, width - 36, 96, 8);
-    this.hudBg.fillStyle(0x020815, 0.7);
-    this.hudBg.fillRoundedRect(10, height - 164, width - 20, 142, 10);
+    this.hudBg.strokeRoundedRect(24, 48, width - 48, 78, 8);
+    this.hudBg.fillStyle(0x020815, 0.62);
+    this.hudBg.fillRoundedRect(14, height - 140, width - 28, 118, 10);
     this.hudBg.lineStyle(2, hudColor, 0.42);
-    this.hudBg.strokeRoundedRect(10, height - 164, width - 20, 142, 10);
+    this.hudBg.strokeRoundedRect(14, height - 140, width - 28, 118, 10);
 
     this.hudBg.fillStyle(0x0a2034, 0.94);
     this.hudBg.fillRoundedRect(24, height - 44, width - 48, 6, 3);
@@ -1084,13 +1144,13 @@ class RaceScene extends Phaser.Scene {
     this.hudBg.fillRoundedRect(24, height - 44, Math.max(12, (width - 48) * (state.boost / 100)), 6, 3);
 
     this.hudBg.fillStyle(0x0a2034, 0.9);
-    this.hudBg.fillRoundedRect(width - 156, height - 126, 132, 7, 3);
+    this.hudBg.fillRoundedRect(width - 144, height - 108, 120, 7, 3);
     this.hudBg.fillStyle(tempColor, 0.92);
-    this.hudBg.fillRoundedRect(width - 156, height - 126, 132 * Phaser.Math.Clamp(state.grillTemp / 100, 0, 1), 7, 3);
+    this.hudBg.fillRoundedRect(width - 144, height - 108, 120 * Phaser.Math.Clamp(state.grillTemp / 100, 0, 1), 7, 3);
 
     this.rpm.clear();
     const rpmX = width / 2;
-    const rpmY = height - 88;
+    const rpmY = height - 76;
     this.rpm.lineStyle(7, 0x17364b, 0.95);
     this.rpm.beginPath();
     this.rpm.arc(rpmX, rpmY, 36, Phaser.Math.DegToRad(205), Phaser.Math.DegToRad(335), false);
@@ -1101,12 +1161,12 @@ class RaceScene extends Phaser.Scene {
     this.rpm.strokePath();
 
     const clusterX = width - 78;
-    const clusterY = height - 88;
+    const clusterY = height - 76;
     this.dashCluster.clear();
     this.dashCluster.fillStyle(0x020815, 0.62);
-    this.dashCluster.fillRoundedRect(width - 142, height - 148, 120, 104, 8);
+    this.dashCluster.fillRoundedRect(width - 130, height - 126, 108, 82, 8);
     this.dashCluster.lineStyle(2, hudColor, 0.36);
-    this.dashCluster.strokeRoundedRect(width - 142, height - 148, 120, 104, 8);
+    this.dashCluster.strokeRoundedRect(width - 130, height - 126, 108, 82, 8);
     this.dashCluster.lineStyle(6, 0x17364b, 0.95);
     this.dashCluster.beginPath();
     this.dashCluster.arc(clusterX, clusterY, 40, Phaser.Math.DegToRad(198), Phaser.Math.DegToRad(342), false);
@@ -1116,26 +1176,26 @@ class RaceScene extends Phaser.Scene {
     this.dashCluster.arc(clusterX, clusterY, 40, Phaser.Math.DegToRad(198), Phaser.Math.DegToRad(198 + 144 * rpmValue), false);
     this.dashCluster.strokePath();
     this.dashCluster.fillStyle(0x0a2034, 0.95);
-    this.dashCluster.fillRoundedRect(width - 126, height - 82, 88, 5, 3);
+    this.dashCluster.fillRoundedRect(width - 118, height - 76, 78, 5, 3);
     this.dashCluster.fillStyle(0xff7a18, 0.95);
-    this.dashCluster.fillRoundedRect(width - 126, height - 82, 88 * (state.boost / 100), 5, 3);
+    this.dashCluster.fillRoundedRect(width - 118, height - 76, 78 * (state.boost / 100), 5, 3);
     this.dashCluster.fillStyle(0x0a2034, 0.95);
-    this.dashCluster.fillRoundedRect(width - 126, height - 70, 88, 5, 3);
+    this.dashCluster.fillRoundedRect(width - 118, height - 64, 78, 5, 3);
     this.dashCluster.fillStyle(tempColor, 0.95);
-    this.dashCluster.fillRoundedRect(width - 126, height - 70, 88 * Phaser.Math.Clamp(state.grillTemp / 100, 0, 1), 5, 3);
+    this.dashCluster.fillRoundedRect(width - 118, height - 64, 78 * Phaser.Math.Clamp(state.grillTemp / 100, 0, 1), 5, 3);
 
-    this.speedText.setPosition(width / 2, height - 124);
-    this.speedUnit.setPosition(width / 2, height - 82);
+    this.speedText.setPosition(width / 2, height - 104);
+    this.speedUnit.setPosition(width / 2, height - 70);
     this.speedText.setColor(colorToCss(hudColor));
     this.speedUnit.setColor(colorToCss(hudColor));
     this.statusText.setColor(colorToCss(hudColor));
     this.tempText.setColor(colorToCss(tempColor));
     this.scoreText.setX(width - 22);
-    this.comboText.setPosition(22, height - 146);
-    this.tempText.setPosition(width - 22, height - 146);
-    this.clusterText.setPosition(width - 32, height - 138);
+    this.comboText.setPosition(22, height - 124);
+    this.tempText.setPosition(width - 22, height - 124);
+    this.clusterText.setPosition(width - 32, height - 118);
     this.questionText.setX(width / 2);
-    this.statusText.setPosition(width / 2, height - 52);
+    this.statusText.setPosition(width / 2, height - 43);
     this.settingsButton.setPosition(22, height - 48);
     const jumpPos = this.getJumpButtonPosition();
     const jumpReady = !state.jumping && !this.jumpLocked && this.jumpCooldown <= 0;
@@ -1150,10 +1210,10 @@ class RaceScene extends Phaser.Scene {
     this.jumpButton.setAlpha(jumpReady ? 1 : 0.58);
     this.jumpButton.setColor(jumpReady ? "#07111f" : "#9fb7c8");
     this.distanceText?.setX(width - 24);
-    this.problemPanel?.setPosition(width / 2, 104).setDisplaySize(width - 24, 98);
-    this.hudPanel?.setPosition(width / 2, height - 104).setDisplaySize(width - 16, 132);
+    this.problemPanel?.setPosition(width / 2, 88).setDisplaySize(width - 34, 82);
+    this.hudPanel?.setPosition(width / 2, height - 86).setDisplaySize(width - 24, 108);
     this.boostIcon?.setPosition(34, height - 42);
-    this.tempIcon?.setPosition(width - 166, height - 123);
+    this.tempIcon?.setPosition(width - 154, height - 105);
   }
 
   getHudColor() {
@@ -1401,17 +1461,17 @@ class RaceScene extends Phaser.Scene {
     for (let lane = 0; lane < 3; lane += 1) {
       const isAnswerLane = lane === 0 || lane === 2;
       const value = isAnswerLane ? problem.choices[lane === 0 ? 0 : 1] : "BOOST";
-      const gate = this.add.container(this.laneToX(lane), initial ? this.scale.height * 0.45 : -90).setDepth(12);
+      const gate = this.add.container(this.laneToX(lane), initial ? this.scale.height * 0.38 : -90).setDepth(12);
       gate.setData("lane", lane);
       gate.setData("value", value);
       gate.setData("isBoost", value === "BOOST");
       gate.setData("isCorrect", value === problem.answer);
-      gate.setSize(78, 82);
-      const gateArt = this.hasTexture("mathGateFrame") ? this.add.image(0, 0, "mathGateFrame").setDisplaySize(98, 108) : null;
+      gate.setSize(70, 76);
+      const gateArt = this.hasTexture("mathGateFrame") ? this.add.image(0, 0, "mathGateFrame").setDisplaySize(86, 96) : null;
       const frame = this.add.graphics();
       const label = this.add.text(0, 0, String(value), {
         fontFamily: "Arial Black, Arial",
-        fontSize: value === "BOOST" ? "15px" : "25px",
+        fontSize: value === "BOOST" ? "13px" : "23px",
         color: value === "BOOST" ? "#04101d" : "#eef8ff"
       }).setOrigin(0.5);
       gate.add([gateArt, frame, label].filter(Boolean));
@@ -1427,12 +1487,12 @@ class RaceScene extends Phaser.Scene {
     gate.frame.clear();
     const color = isBoost ? 0xffcf54 : gate.getData("isCorrect") ? 0x35d4ff : 0xff7a18;
     if (gate.gateArt) gate.gateArt.setTint(color).setAlpha(isBoost ? 0.92 : 0.78);
-    gate.frame.lineStyle(5, color, 0.9);
-    gate.frame.strokeRoundedRect(-44, -48, 88, 96, 10);
+    gate.frame.lineStyle(4, color, 0.88);
+    gate.frame.strokeRoundedRect(-38, -42, 76, 84, 10);
     gate.frame.fillStyle(isBoost ? 0xffcf54 : 0x020815, isBoost ? 0.2 : 0.34);
-    gate.frame.fillRoundedRect(-38, -40, 76, 80, 8);
+    gate.frame.fillRoundedRect(-32, -35, 64, 70, 8);
     gate.frame.lineStyle(1, 0xffffff, 0.28);
-    gate.frame.lineBetween(-26, 0, 26, 0);
+    gate.frame.lineBetween(-22, 0, 22, 0);
   }
 
   update(time, delta) {
@@ -1476,11 +1536,11 @@ class RaceScene extends Phaser.Scene {
   updateTerrain(time, delta, speedFactor) {
     const { width, height } = this.scale;
     this.trackLines.forEach((line, index) => {
-      const phase = (time * 0.16 * speedFactor + index * 66) % (height * 0.62);
-      const y = height * 0.42 + phase;
-      const depth = Phaser.Math.Clamp((y - height * 0.42) / (height * 0.58), 0, 1);
+      const phase = (time * 0.19 * speedFactor + index * 58) % (height * 0.68);
+      const y = height * 0.34 + phase;
+      const depth = Phaser.Math.Clamp((y - height * 0.34) / (height * 0.66), 0, 1);
       line.setPosition(width / 2 + Math.sin(index * 1.7) * depth * 90, y);
-      line.setScale(0.28 + depth * 2.05, 1);
+      line.setScale(0.2 + depth * 2.65, 1);
       line.setAlpha(0.08 + depth * 0.36 + state.boost / 360);
     });
 
@@ -1498,11 +1558,49 @@ class RaceScene extends Phaser.Scene {
     this.props.forEach((prop, index) => {
       if (!prop.visible) return;
       const side = prop.getData("side");
-      const phase = (time * 0.13 * speedFactor + prop.getData("offset")) % (height * 0.74);
-      const y = height * 0.36 + phase;
-      const depth = Phaser.Math.Clamp((y - height * 0.36) / (height * 0.64), 0, 1);
-      const x = width / 2 + side * (62 + depth * width * 0.66);
+      const phase = (time * 0.16 * speedFactor + prop.getData("offset")) % (height * 0.77);
+      const y = height * 0.31 + phase;
+      const depth = Phaser.Math.Clamp((y - height * 0.31) / (height * 0.69), 0, 1);
+      const x = width / 2 + side * (48 + depth * width * 0.72);
       this.drawCourseProp(prop, x, y, depth, side, index);
+    });
+
+    this.courseTape.forEach((tape, index) => {
+      if (!tape.visible) return;
+      const side = tape.getData("side");
+      const phase = (time * 0.18 * speedFactor + tape.getData("offset")) % (height * 0.76);
+      const y = height * 0.33 + phase;
+      const depth = Phaser.Math.Clamp((y - height * 0.33) / (height * 0.67), 0, 1);
+      const x = width / 2 + side * (60 + depth * width * 0.57);
+      if (tape.setTexture && this.hasTexture("mtbTrackTape")) {
+        tape.setTexture("mtbTrackTape");
+        tape.setPosition(x, y);
+        tape.setScale(0.18 + depth * 0.82);
+        tape.setAlpha(0.6 + depth * 0.34);
+        tape.setAngle(side * (8 + depth * 6));
+        tape.setFlipX(side < 0);
+      } else {
+        tape.clear();
+        tape.setPosition(x, y);
+        tape.lineStyle(4, 0xf6fbff, 0.74);
+        tape.lineBetween(side * -62, 0, side * 52, 18);
+        tape.lineStyle(3, index % 2 ? 0xff7a18 : 0x35d4ff, 0.82);
+        tape.lineBetween(side * -62, -8, side * 52, 10);
+      }
+    });
+
+    this.rampProps.forEach((ramp, index) => {
+      if (!ramp.visible) return;
+      const phase = (time * 0.115 * speedFactor + ramp.getData("offset")) % (height * 1.22);
+      const y = height * 0.28 + phase;
+      const depth = Phaser.Math.Clamp((y - height * 0.28) / (height * 0.72), 0, 1);
+      const x = width / 2 + Math.sin(index * 1.9 + time * 0.0008) * 34 * depth;
+      if (ramp.setTexture && this.hasTexture("mtbJumpRamp")) {
+        ramp.setTexture("mtbJumpRamp");
+        ramp.setPosition(x, y);
+        ramp.setScale(0.18 + depth * 0.7);
+        ramp.setAlpha(y > height * 0.44 && y < height * 0.8 ? 0.76 : 0);
+      }
     });
   }
 
@@ -1510,10 +1608,12 @@ class RaceScene extends Phaser.Scene {
     prop.setPosition(x, y);
     const kind = prop.getData("kind");
     if (prop.setTexture && this.hasTexture("pineTree")) {
-      const keys = ["pineTree", "courseFlag", "snowBank", "rock", "courseArrow", "courseFence"];
+      const keys = ["pineTree", "courseFlag", "snowBank", "rock", "courseArrow", "courseFence", "mtbCourseMarker", "mtbBankCurve", "pineTree", "courseArrow"];
       const key = keys[kind] || "pineTree";
       prop.setTexture(key);
-      prop.setScale((key === "courseFence" ? 0.18 : 0.25) + depth * (key === "courseFence" ? 0.62 : 0.92));
+      const baseScale = key === "courseFence" ? 0.18 : key === "mtbBankCurve" ? 0.16 : key === "mtbCourseMarker" ? 0.22 : 0.25;
+      const scaleRange = key === "courseFence" ? 0.62 : key === "mtbBankCurve" ? 0.76 : key === "mtbCourseMarker" ? 0.86 : 0.98;
+      prop.setScale(baseScale + depth * scaleRange);
       prop.setAlpha(0.82 + depth * 0.18);
       prop.setFlipX(side < 0);
       return;
@@ -1543,7 +1643,7 @@ class RaceScene extends Phaser.Scene {
     for (let i = this.gates.length - 1; i >= 0; i -= 1) {
       const gate = this.gates[i];
       gate.y += delta * 0.285 * speedFactor;
-      const depth = Phaser.Math.Clamp(gate.y / this.scale.height, 0.2, 1.2);
+      const depth = Phaser.Math.Clamp(gate.y / this.scale.height, 0.18, 0.98);
       gate.setScale(depth);
 
       if (this.isGateInCatchWindow(gate)) {
@@ -1691,24 +1791,24 @@ class RaceScene extends Phaser.Scene {
     }
     this.tweens.add({
       targets: this.rider,
-      y: this.scale.height * 0.62,
+      y: this.scale.height * 0.61,
       scale: 1.14,
       duration: 235,
       ease: "Quad.easeOut",
       onUpdate: () => {
-        const lift = Phaser.Math.Clamp((this.scale.height * 0.76 - this.rider.y) / (this.scale.height * 0.14), 0, 1);
+        const lift = Phaser.Math.Clamp((this.scale.height * 0.79 - this.rider.y) / (this.scale.height * 0.18), 0, 1);
         this.shadow.setScale(1 - lift * 0.46, 1 - lift * 0.62);
         this.shadow.setAlpha(0.34 - lift * 0.19);
       },
       onComplete: () => {
         this.tweens.add({
           targets: this.rider,
-          y: this.scale.height * 0.76,
+          y: this.scale.height * 0.79,
           scale: 1,
           duration: 245,
           ease: "Quad.easeIn",
           onUpdate: () => {
-            const lift = Phaser.Math.Clamp((this.scale.height * 0.76 - this.rider.y) / (this.scale.height * 0.14), 0, 1);
+            const lift = Phaser.Math.Clamp((this.scale.height * 0.79 - this.rider.y) / (this.scale.height * 0.18), 0, 1);
             this.shadow.setScale(1 - lift * 0.46, 1 - lift * 0.62);
             this.shadow.setAlpha(0.34 - lift * 0.19);
           },
@@ -1727,7 +1827,7 @@ class RaceScene extends Phaser.Scene {
     this.drawRider(this.lane - 1);
     feedback.trigger("land");
     this.cameras.main.shake(115, state.performance.lowEffectsMode ? 0.003 : 0.006);
-    const ring = this.add.circle(this.rider.x, this.rider.y + 54, 10, 0xffffff, 0).setStrokeStyle(4, 0xdff8ff, 0.8).setDepth(19);
+    const ring = this.add.circle(this.rider.x, this.rider.y + 72, 10, 0xffffff, 0).setStrokeStyle(4, 0xdff8ff, 0.8).setDepth(19);
     this.tweens.add({
       targets: ring,
       radius: 72,
@@ -1868,7 +1968,7 @@ class RaceScene extends Phaser.Scene {
   handleResize() {
     this.drawWorld();
     this.drawHud();
-    this.rider.setPosition(this.laneToX(this.lane), this.scale.height * 0.76);
+    this.rider.setPosition(this.laneToX(this.lane), this.scale.height * 0.79);
     this.tutorialText?.setX(this.scale.width / 2);
   }
 
@@ -1968,6 +2068,34 @@ function drawRiderSilhouette(scene, x, y) {
   g.fillTriangle(x + 82, y - 4, x + 150, y + 22, x + 82, y + 42);
   g.fillStyle(0xff7a18, 0.78);
   g.fillTriangle(x + 76, y + 8, x + 126, y + 26, x + 76, y + 34);
+}
+
+function drawMtbTitleHero(scene, x, y) {
+  const { width, height } = scene.scale;
+  const g = scene.add.graphics();
+  g.fillStyle(0xdff8ff, 0.18);
+  g.beginPath();
+  g.moveTo(width * 0.5, y - 42);
+  g.lineTo(width + 48, height * 0.74);
+  g.lineTo(-48, height * 0.74);
+  g.closePath();
+  g.fillPath();
+  g.lineStyle(5, 0x35d4ff, 0.52);
+  g.lineBetween(x - 52, y - 32, 28, height * 0.72);
+  g.lineBetween(x + 52, y - 32, width - 28, height * 0.72);
+  g.lineStyle(4, 0xff7a18, 0.64);
+  g.lineBetween(x - 74, y + 10, 12, height * 0.78);
+  g.lineBetween(x + 74, y + 10, width - 12, height * 0.78);
+
+  if (scene.textures.exists("mtbTrackTape")) {
+    scene.add.image(x - 128, y + 116, "mtbTrackTape").setDisplaySize(178, 62).setAngle(-15).setAlpha(0.9);
+    scene.add.image(x + 128, y + 112, "mtbTrackTape").setDisplaySize(178, 62).setAngle(15).setFlipX(true).setAlpha(0.9);
+  }
+  if (scene.textures.exists("riderMtbBoost")) {
+    scene.add.image(x + 44, y + 54, "riderMtbBoost").setDisplaySize(292, 188).setAngle(-6);
+  } else {
+    drawRiderSilhouette(scene, x - 24, y - 14);
+  }
 }
 
 function starsText(stars) {

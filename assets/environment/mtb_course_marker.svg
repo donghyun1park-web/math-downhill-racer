@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 180" role="img" aria-labelledby="title">
+  <title id="title">MTB downhill course direction marker</title>
+  <g id="mtb-course-marker">
+    <path d="M30 166V26" stroke="#f6fbff" stroke-width="10" stroke-linecap="round"/>
+    <path d="M38 35h86L92 70l32 35H38z" fill="#07111f" stroke="#35d4ff" stroke-width="6"/>
+    <path d="M56 51h35L77 69h27L69 93" fill="none" stroke="#ff7a18" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

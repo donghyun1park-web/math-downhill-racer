@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 320" role="img" aria-labelledby="title">
+  <title id="title">Downhill MTB tire tracks in snow</title>
+  <g id="mtb-tire-tracks" fill="none" stroke-linecap="round">
+    <path d="M58 8C37 80 88 145 55 312" stroke="#06101e" stroke-width="10" opacity=".34" stroke-dasharray="18 16"/>
+    <path d="M122 8C101 80 152 145 119 312" stroke="#06101e" stroke-width="10" opacity=".34" stroke-dasharray="18 16"/>
+    <path d="M56 8C35 80 86 145 53 312M120 8C99 80 150 145 117 312" stroke="#9ee7ff" stroke-width="3" opacity=".45" stroke-dasharray="18 16"/>
+  </g>
+</svg>

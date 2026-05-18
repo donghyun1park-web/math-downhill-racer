@@ -1,4 +1,4 @@
-const CACHE_NAME = "math-downhill-racer-v2";
+const CACHE_NAME = "math-downhill-racer-v3";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -14,6 +14,9 @@ const CORE_ASSETS = [
   "./assets/sprites/rider.svg",
   "./assets/sprites/rider_boost.svg",
   "./assets/sprites/rider_jump.svg",
+  "./assets/sprites/rider_mtb_large.svg",
+  "./assets/sprites/rider_mtb_boost_large.svg",
+  "./assets/sprites/rider_mtb_jump_large.svg",
   "./assets/sprites/bike_shadow.svg",
   "./assets/sprites/boost_flame.svg",
   "./assets/environment/pine_tree.svg",
@@ -37,6 +40,11 @@ const CORE_ASSETS = [
   "./assets/environment/course_arrow.svg",
   "./assets/environment/course_fence.svg",
   "./assets/environment/mountain_layer.svg",
+  "./assets/environment/mtb_track_tape.svg",
+  "./assets/environment/mtb_jump_ramp.svg",
+  "./assets/environment/mtb_tire_tracks.svg",
+  "./assets/environment/mtb_bank_curve.svg",
+  "./assets/environment/mtb_course_marker.svg",
   "./assets/effects/boost_spark.svg",
   "./vendor/phaser.min.js"
 ];

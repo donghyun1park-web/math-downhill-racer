@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 130" role="img" aria-labelledby="title">
+  <title id="title">Snow covered MTB jump ramp</title>
+  <g id="mtb-jump-ramp">
+    <path d="M16 101C82 94 121 58 194 20l16 68c-61 21-125 29-194 25z" fill="#8fb3c7" stroke="#07111f" stroke-width="7"/>
+    <path d="M21 91C86 84 122 49 190 16l8 27c-64 35-111 54-177 57z" fill="#f6fbff"/>
+    <path d="M51 96l107-56M87 101l86-44" stroke="#35506a" stroke-width="5" opacity=".65"/>
+    <path d="M150 43l27-16M163 63l29-10" stroke="#ff7a18" stroke-width="6"/>
+  </g>
+</svg>

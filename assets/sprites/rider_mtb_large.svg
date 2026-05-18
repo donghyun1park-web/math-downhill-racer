@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260" role="img" aria-labelledby="title desc">
+  <title id="title">Large downhill MTB rider with helmet, wheels, bike frame, and turbo grill</title>
+  <desc id="desc">A stylized full suspension mountain bike rider in an aggressive downhill stance.</desc>
+  <defs>
+    <linearGradient id="tire" x1="0" x2="1"><stop stop-color="#07111f"/><stop offset="1" stop-color="#24384c"/></linearGradient>
+    <linearGradient id="orange" x1="0" x2="1"><stop stop-color="#ff7a18"/><stop offset="1" stop-color="#ffcf54"/></linearGradient>
+    <linearGradient id="blue" x1="0" x2="1"><stop stop-color="#35d4ff"/><stop offset="1" stop-color="#0b5cff"/></linearGradient>
+  </defs>
+  <g id="bike" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse id="rear-wheel" cx="88" cy="194" rx="50" ry="44" fill="none" stroke="url(#tire)" stroke-width="18"/>
+    <ellipse id="front-wheel" cx="270" cy="192" rx="58" ry="48" fill="none" stroke="url(#tire)" stroke-width="18"/>
+    <g id="spokes" stroke="#9ee7ff" stroke-width="2" opacity=".55">
+      <path d="M88 194l-37-18M88 194l31-26M88 194l38 14M88 194l-25 34M270 192l-46-20M270 192l34-32M270 192l49 17M270 192l-33 35"/>
+    </g>
+    <path id="full-suspension-frame" d="M88 194l70-82 74 80H88l45-6 25-74 20 80" fill="none" stroke="#dff8ff" stroke-width="11"/>
+    <path id="fork" d="M232 192l34-98M256 193l34-92" stroke="#35d4ff" stroke-width="10"/>
+    <path id="handlebar" d="M288 96l32-15M285 96l-38 3" stroke="#f6fbff" stroke-width="9"/>
+    <path id="crank" d="M170 188l18 16M170 188l-19 15" stroke="#ffcf54" stroke-width="7"/>
+  </g>
+  <g id="rider">
+    <path id="legs-knee-pads" d="M150 132l-44 58M176 137l55 51" fill="none" stroke="#f6fbff" stroke-width="18" stroke-linecap="round"/>
+    <path d="M108 188l-28 18M230 187l32 14" fill="none" stroke="#07111f" stroke-width="12" stroke-linecap="round"/>
+    <path id="jersey" d="M126 88c32-26 83-20 108 12l-27 48c-29-7-57-17-91-43z" fill="#10243a" stroke="#dff8ff" stroke-width="4"/>
+    <path d="M137 91l80 48" stroke="url(#orange)" stroke-width="14"/>
+    <path d="M125 110l82 42" stroke="url(#blue)" stroke-width="8"/>
+    <path id="arms" d="M203 104l76-11M141 105l-42 45" fill="none" stroke="#f6fbff" stroke-width="15" stroke-linecap="round"/>
+    <path id="gloves" d="M274 91l23 5M95 150l-18 12" stroke="#07111f" stroke-width="11" stroke-linecap="round"/>
+    <g id="helmet">
+      <path d="M107 58c25-32 78-25 92 9 3 18-10 35-35 36l-48-8c-16-8-18-24-9-37z" fill="#f6fbff" stroke="#07111f" stroke-width="6"/>
+      <path id="goggles" d="M119 68l61 9-9 17-57-8z" fill="#07111f"/>
+      <path d="M178 77l33 1" stroke="#ff7a18" stroke-width="8" stroke-linecap="round"/>
+    </g>
+    <g id="turbo-grill">
+      <rect x="206" y="65" width="50" height="42" rx="8" fill="#ff7a18" stroke="#07111f" stroke-width="5"/>
+      <circle cx="231" cy="86" r="16" fill="#07111f" stroke="#ffcf54" stroke-width="5"/>
+      <path d="M216 74h31M216 98h31" stroke="#ffcf54" stroke-width="4"/>
+    </g>
+  </g>
+</svg>
