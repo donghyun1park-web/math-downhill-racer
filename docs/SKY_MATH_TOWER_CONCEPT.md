@@ -21,6 +21,41 @@ Sky Math Tower keeps the strongest parts of the project and removes the weakest 
 7. Reaching targetHeight clears the stage.
 8. Losing all lives shows Try Again.
 
+## First-Run Behavior
+
+Sky Math Tower uses its own tutorial completion key: `sky-math-tower-tutorial-complete`.
+
+- If the key is missing, the first run opens the Sky Tower tutorial intro.
+- If the key exists, the first run opens the Sky Tower menu and stage selection.
+- The menu always keeps a TUTORIAL button so practice can be replayed.
+- Skipping the tutorial stores the same completion structure as finishing practice.
+
+## Tutorial Flow
+
+The tutorial teaches one idea at a time:
+
+1. Look at the problem and pick the correct block.
+2. See the character jump upward after a correct answer.
+3. Pick the correct answer from slowly moving blocks.
+4. Learn that wrong blocks shake and hearts matter.
+
+Tutorial problems use `source: "tutorial"` and are excluded from learning stats by `shouldRecordLearningResult()`.
+
+## Stage Flow And Unlock Rules
+
+Stage 1 is unlocked by default. Each cleared stage unlocks the next one through the existing progress structure.
+
+- Stage start resets height, lives, combo, score, current problem, and current blocks.
+- Stage clear happens when `currentHeight` reaches `targetHeight`.
+- Game over happens when lives reach 0.
+- Results show score, accuracy, best combo, and height reached.
+
+Stars keep the existing reward logic:
+
+- 1 star: clear the stage
+- 2 stars: 70% accuracy or higher
+- 3 stars: 85% accuracy or higher plus best combo 5 or higher
+
 ## Math Connection
 
 The math problem is the reason to choose a platform. The answer block is not a quiz panel; it is the next safe step in the tower. Correct answers should feel like climbing higher.

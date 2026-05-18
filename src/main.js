@@ -35,6 +35,7 @@ const GAME_CONCEPT = "sky-math-tower";
 const ACTIVE_GAME_MODE = "tower";
 const PROGRESS_KEY = "math-downhill-progress";
 const PERFORMANCE_SETTINGS_KEY = "math-downhill-performance-settings";
+const SKY_TOWER_TUTORIAL_KEY = "sky-math-tower-tutorial-complete";
 const OVERHEAT_LIMIT = 112;
 const JUMP_ZONE_SIZE = 88;
 const SAFE_BOTTOM_FALLBACK = 16;
@@ -60,6 +61,32 @@ const SKY_TOWER_STAGES = [
   { id: 3, name: "Sky Bridge", targetHeight: 14, blockCount: 3, blockSpeed: 0.35 },
   { id: 4, name: "Star Tower", targetHeight: 16, blockCount: 3, blockSpeed: 0.45 },
   { id: 5, name: "Storm Top", targetHeight: 18, blockCount: 3, blockSpeed: 0.55 }
+];
+const SKY_TOWER_TUTORIAL_STEPS = [
+  {
+    id: 1,
+    title: "Look at the problem. Pick the correct block!",
+    detail: "Tap 5 for 3 + 2.",
+    moving: false
+  },
+  {
+    id: 2,
+    title: "Correct answer makes you jump higher.",
+    detail: "Watch the climber land on the safe block.",
+    moving: false
+  },
+  {
+    id: 3,
+    title: "Moving blocks need careful eyes.",
+    detail: "Pick the answer while the blocks drift.",
+    moving: true
+  },
+  {
+    id: 4,
+    title: "Wrong blocks shake. Protect your hearts!",
+    detail: "Choose the safe answer to finish practice.",
+    moving: true
+  }
 ];
 const UI_SAFE_ZONES = {
   problemBanner: { topRatio: 0.055, bottomRatio: 0.16 },
@@ -359,6 +386,26 @@ function saveTutorialState(value) {
   localStorage.setItem(TUTORIAL_KEY, JSON.stringify(value));
 }
 
+function loadSkyTowerTutorialState() {
+  const saved = localStorage.getItem(SKY_TOWER_TUTORIAL_KEY);
+  if (!saved) return null;
+  try {
+    const parsed = JSON.parse(saved);
+    return parsed?.completed ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveSkyTowerTutorialState(value = createTutorialCompletion()) {
+  localStorage.setItem(SKY_TOWER_TUTORIAL_KEY, JSON.stringify(value));
+  return value;
+}
+
+function skipSkyTowerTutorial(timestamp = Date.now()) {
+  return saveSkyTowerTutorialState(createTutorialCompletion(timestamp));
+}
+
 function isTowerMode() {
   return ACTIVE_GAME_MODE === "tower" && GAME_CONCEPT === "sky-math-tower";
 }
@@ -562,7 +609,7 @@ class BootScene extends Phaser.Scene {
 
   create() {
     if (isTowerMode()) {
-      this.scene.start("tower", { stageId: Math.min(state.progress.unlockedStage, SKY_TOWER_STAGES.length) });
+      this.scene.start(loadSkyTowerTutorialState() ? "menu" : "tutorialIntro");
       return;
     }
     this.scene.start(loadTutorialState() ? "menu" : "tutorialIntro");
@@ -575,6 +622,10 @@ class TutorialIntroScene extends Phaser.Scene {
   }
 
   create() {
+    if (isTowerMode()) {
+      this.createTowerIntro();
+      return;
+    }
     this.cameras.main.setBackgroundColor("#07111f");
     const { width, height } = this.scale;
     const centerX = Math.min(width, DESIGN.width) / 2;
@@ -633,6 +684,57 @@ class TutorialIntroScene extends Phaser.Scene {
     }, "buttonDark");
   }
 
+  createTowerIntro() {
+    this.cameras.main.setBackgroundColor("#8bdcff");
+    const { width, height } = this.scale;
+    const centerX = width / 2;
+    const g = this.add.graphics();
+    g.fillGradientStyle(0x6bd4ff, 0xc7f2ff, 0xf5fdff, 0x8bb7ff, 1);
+    g.fillRect(0, 0, width, height);
+    g.fillStyle(0xffffff, 0.5);
+    for (let i = 0; i < 7; i += 1) {
+      const x = (i * 83) % (width + 90) - 35;
+      const y = height * 0.16 + (i % 4) * 92;
+      g.fillCircle(x, y, 24);
+      g.fillCircle(x + 28, y + 6, 18);
+      g.fillCircle(x - 26, y + 8, 16);
+    }
+    g.fillStyle(0x5d7bea, 0.16);
+    g.fillRoundedRect(width * 0.66, height * 0.34, 38, height * 0.28, 8);
+    g.fillTriangle(width * 0.66, height * 0.34, width * 0.71, height * 0.26, width * 0.76, height * 0.34);
+    g.fillStyle(0xffffff, 0.82);
+    g.fillRoundedRect(24, 112, width - 48, 360, 14);
+    g.lineStyle(3, 0x6bd4ff, 0.9);
+    g.strokeRoundedRect(24, 112, width - 48, 360, 14);
+    this.add.text(centerX, 150, "SKY MATH TOWER", {
+      fontFamily: "Arial Black, Arial",
+      fontSize: "30px",
+      color: "#17345f",
+      stroke: "#ffffff",
+      strokeThickness: 5
+    }).setOrigin(0.5);
+    this.add.text(centerX, 220, "Look at the problem.\nTap the correct block.\nJump higher and protect your hearts!", {
+      fontFamily: "Arial Black, Arial",
+      fontSize: "20px",
+      color: "#1d3c68",
+      align: "center",
+      lineSpacing: 8
+    }).setOrigin(0.5);
+    this.add.text(centerX, 352, "3 + 2 = ?", {
+      fontFamily: "Arial Black, Arial",
+      fontSize: "34px",
+      color: "#7b5cff",
+      stroke: "#ffffff",
+      strokeThickness: 6
+    }).setOrigin(0.5);
+    this.createButton(centerX, height - 214, "START PRACTICE", () => this.scene.start("tower", { mode: "tutorial" }), "buttonStart");
+    this.createButton(centerX, height - 138, "SKIP", () => {
+      feedback.trigger("uiClick");
+      skipSkyTowerTutorial();
+      this.scene.start("menu");
+    }, "buttonDark");
+  }
+
   createButton(x, y, label, action, textureKey = "buttonBlue") {
     drawArcadeButton(this, x, y, textureKey);
     return this.add.text(x, y, label, {
@@ -655,6 +757,10 @@ class MenuScene extends Phaser.Scene {
 
   create() {
     state.progress = loadProgress();
+    if (isTowerMode()) {
+      this.createTowerMenu();
+      return;
+    }
     this.cameras.main.setBackgroundColor("#07111f");
     this.drawBackground();
     const { width, height } = this.scale;
@@ -700,6 +806,106 @@ class MenuScene extends Phaser.Scene {
       feedback.trigger("uiClick");
       settingsPanel.classList.toggle("is-open");
     }, 22);
+  }
+
+  createTowerMenu() {
+    state.progress = loadProgress();
+    this.cameras.main.setBackgroundColor("#8bdcff");
+    this.drawTowerMenuBackground();
+    const { width, height } = this.scale;
+    const centerX = width / 2;
+    this.add.text(centerX, 64, "SKY", {
+      fontFamily: "Arial Black, Arial",
+      fontSize: "48px",
+      color: "#ffffff",
+      stroke: "#17345f",
+      strokeThickness: 8
+    }).setOrigin(0.5);
+    this.add.text(centerX, 112, "MATH TOWER", {
+      fontFamily: "Arial Black, Arial",
+      fontSize: "34px",
+      color: "#7b5cff",
+      stroke: "#ffffff",
+      strokeThickness: 7
+    }).setOrigin(0.5);
+    this.add.text(centerX, 146, "PICK  -  JUMP  -  CLIMB", {
+      fontFamily: "monospace",
+      fontSize: "13px",
+      color: "#17345f"
+    }).setOrigin(0.5);
+    this.createTowerStageCards();
+    this.createMenuButton(centerX, height - 248, "START", "buttonStart", () => {
+      feedback.trigger("uiClick");
+      if (!loadSkyTowerTutorialState()) {
+        this.scene.start("tutorialIntro");
+        return;
+      }
+      this.scene.start("tower", { stageId: Math.min(state.progress.unlockedStage, SKY_TOWER_STAGES.length) });
+    }, 30);
+    this.createMenuButton(centerX, height - 178, "TUTORIAL", "buttonBlue", () => {
+      feedback.trigger("uiClick");
+      this.scene.start("tower", { mode: "tutorial" });
+    }, 22);
+    this.createMenuButton(centerX, height - 112, "STAGE SELECT", "buttonBlue", () => {
+      feedback.trigger("uiClick");
+    }, 18);
+    this.createMenuButton(centerX, height - 50, "SETTINGS", "buttonDark", () => {
+      feedback.trigger("uiClick");
+      settingsPanel.classList.toggle("is-open");
+    }, 20);
+  }
+
+  drawTowerMenuBackground() {
+    const g = this.add.graphics();
+    const { width, height } = this.scale;
+    g.fillGradientStyle(0x6bd4ff, 0xc7f2ff, 0xf5fdff, 0x8bb7ff, 1);
+    g.fillRect(0, 0, width, height);
+    g.fillStyle(0xffffff, 0.48);
+    for (let i = 0; i < 9; i += 1) {
+      const x = (i * 71) % (width + 80) - 30;
+      const y = 84 + (i % 5) * 102;
+      g.fillCircle(x, y, 22);
+      g.fillCircle(x + 26, y + 5, 18);
+      g.fillCircle(x - 22, y + 8, 14);
+    }
+    g.fillStyle(0x203d79, 0.16);
+    g.fillRect(0, height * 0.82, width, height * 0.18);
+  }
+
+  createTowerStageCards() {
+    const startY = 178;
+    SKY_TOWER_STAGES.forEach((stage, index) => {
+      const unlocked = stage.id <= state.progress.unlockedStage;
+      const best = state.progress.bestScores[stage.id];
+      const y = startY + index * 66;
+      const card = this.add.graphics();
+      card.fillStyle(unlocked ? 0xffffff : 0xc9dcf8, unlocked ? 0.86 : 0.58);
+      card.fillRoundedRect(24, y, this.scale.width - 48, 56, 10);
+      card.lineStyle(2, unlocked ? 0x6bd4ff : 0x8799b5, unlocked ? 0.9 : 0.55);
+      card.strokeRoundedRect(24, y, this.scale.width - 48, 56, 10);
+      this.add.text(42, y + 9, `Stage ${stage.id}: ${stage.name}`, {
+        fontFamily: "Arial Black, Arial",
+        fontSize: "15px",
+        color: unlocked ? "#17345f" : "#6b7f90"
+      });
+      this.add.text(42, y + 33, unlocked ? `Height ${stage.targetHeight}` : "LOCKED", {
+        fontFamily: "monospace",
+        fontSize: "12px",
+        color: unlocked ? "#4e77c9" : "#6b7f90"
+      });
+      this.add.text(this.scale.width - 42, y + 18, best ? starsText(best.stars) : starsText(0), {
+        fontFamily: "Arial Black, Arial",
+        fontSize: "17px",
+        color: best ? "#ffb300" : "#8799b5"
+      }).setOrigin(1, 0);
+      if (unlocked) {
+        const zone = this.add.zone(this.scale.width / 2, y + 28, this.scale.width - 48, 56).setInteractive({ useHandCursor: true });
+        zone.on("pointerdown", () => {
+          feedback.trigger("uiClick");
+          this.scene.start("tower", { stageId: stage.id });
+        });
+      }
+    });
   }
 
   drawBackground() {
@@ -881,6 +1087,10 @@ class TutorialCompleteScene extends Phaser.Scene {
   }
 
   create() {
+    if (isTowerMode()) {
+      this.createTowerComplete();
+      return;
+    }
     this.cameras.main.setBackgroundColor("#07111f");
     const { width, height } = this.scale;
     const g = this.add.graphics();
@@ -907,6 +1117,36 @@ class TutorialCompleteScene extends Phaser.Scene {
     this.createButton(width / 2, 566, "STAGE SELECT", () => this.scene.start("menu"), true);
   }
 
+  createTowerComplete() {
+    saveSkyTowerTutorialState();
+    this.cameras.main.setBackgroundColor("#8bdcff");
+    const { width, height } = this.scale;
+    const g = this.add.graphics();
+    g.fillGradientStyle(0x6bd4ff, 0xc7f2ff, 0xf5fdff, 0x8bb7ff, 1);
+    g.fillRect(0, 0, width, height);
+    g.fillStyle(0xffffff, 0.84);
+    g.fillRoundedRect(24, 128, width - 48, 360, 14);
+    g.lineStyle(3, 0x57e389, 0.86);
+    g.strokeRoundedRect(24, 128, width - 48, 360, 14);
+    this.add.text(width / 2, 168, "Practice Complete!", {
+      fontFamily: "Arial Black, Arial",
+      fontSize: "28px",
+      color: "#57a338",
+      stroke: "#ffffff",
+      strokeThickness: 5
+    }).setOrigin(0.5);
+    this.add.text(width / 2, 238, "Ready to climb\nthe Sky Tower?", {
+      fontFamily: "Arial Black, Arial",
+      fontSize: "23px",
+      color: "#17345f",
+      align: "center",
+      lineSpacing: 8
+    }).setOrigin(0.5);
+    this.createButton(width / 2, 356, "START STAGE 1", () => this.scene.start("tower", { stageId: 1 }));
+    this.createButton(width / 2, 424, "PRACTICE AGAIN", () => this.scene.start("tower", { mode: "tutorial" }), true);
+    this.createButton(width / 2, 566, "STAGE SELECT", () => this.scene.start("menu"), true);
+  }
+
   createButton(x, y, label, action, secondary = false) {
     return this.add.text(x, y, label, {
       fontFamily: "Arial Black, Arial",
@@ -927,12 +1167,19 @@ class SkyTowerScene extends Phaser.Scene {
   }
 
   init(data = {}) {
-    this.stageId = data.stageId || Math.min(state.progress.unlockedStage, SKY_TOWER_STAGES.length);
+    this.isTutorial = data.mode === "tutorial";
+    this.tutorialStep = Number(data.tutorialStep || 1);
+    this.stageId = this.isTutorial ? 1 : data.stageId || Math.min(state.progress.unlockedStage, SKY_TOWER_STAGES.length);
   }
 
   create() {
     this.stage = SKY_TOWER_STAGES.find((stage) => stage.id === this.stageId) || SKY_TOWER_STAGES[0];
     resetTowerRun(this.stage);
+    if (this.isTutorial) {
+      towerState.targetHeight = SKY_TOWER_TUTORIAL_STEPS.length;
+      towerState.lives = 3;
+      towerState.roundState = "waitingForAnswer";
+    }
     this.cameras.main.setBackgroundColor("#87d9ff");
     this.world = this.add.graphics();
     this.depthFog = this.add.graphics().setDepth(4);
@@ -1137,21 +1384,35 @@ class SkyTowerScene extends Phaser.Scene {
   createRound() {
     towerState.roundState = "waitingForAnswer";
     towerState.selectedBlockId = null;
-    towerState.currentProblem = generateProblem({
-      operations: state.operations,
-      stageId: towerState.stageId,
-      learningStats: loadLearningStats()
-    });
+    towerState.currentProblem = this.isTutorial
+      ? { ...createTutorialProblem(this.tutorialStep === 4 ? 4 : 2), source: "tutorial" }
+      : generateProblem({
+        operations: state.operations,
+        stageId: towerState.stageId,
+        learningStats: loadLearningStats()
+      });
     this.problemText.setText(`${towerState.currentProblem.question} = ?`);
+    this.updateTutorialCopy();
     this.createAnswerBlocks();
     this.updateTowerHud();
+  }
+
+  updateTutorialCopy(message) {
+    if (!this.towerHintText) return;
+    if (!this.isTutorial) {
+      this.towerHintText.setText("Choose the correct block!\nTap the answer block.\nCorrect answer makes you jump higher.");
+      return;
+    }
+    const step = SKY_TOWER_TUTORIAL_STEPS[this.tutorialStep - 1] || SKY_TOWER_TUTORIAL_STEPS[0];
+    this.towerHintText.setText(message || `${step.title}\n${step.detail}`);
+    this.towerHintText.setAlpha(0.92);
   }
 
   createAnswerBlocks() {
     this.blockLayer.removeAll(true);
     towerState.currentBlocks = [];
     const { width, height } = this.scale;
-    const blockCount = this.stage.blockCount;
+    const blockCount = this.isTutorial ? 2 : this.stage.blockCount;
     const choices = this.getTowerChoices(towerState.currentProblem, blockCount);
     const spread = blockCount === 2 ? width * 0.28 : width * 0.24;
     const startX = width / 2 - spread * (blockCount - 1) / 2;
@@ -1163,7 +1424,7 @@ class SkyTowerScene extends Phaser.Scene {
         x: startX + spread * index,
         y: height * 0.42 + (index % 2) * 34,
         baseX: startX + spread * index,
-        moveAmplitude: 12 + this.stage.id * 2,
+        moveAmplitude: this.isTutorial && !SKY_TOWER_TUTORIAL_STEPS[this.tutorialStep - 1]?.moving ? 0 : 12 + this.stage.id * 2,
         moveSpeed: this.stage.blockSpeed + index * 0.07,
         visualState: "normal"
       };
@@ -1296,16 +1557,26 @@ class SkyTowerScene extends Phaser.Scene {
         this.cameras.main.shake(90, 0.003);
         this.createLandingBurst(block.x, block.y);
         if (towerState.currentHeight >= towerState.targetHeight) {
-          this.finishTowerRun(true, "Tower complete");
+          if (this.isTutorial) {
+            this.completeTowerTutorial();
+          } else {
+            this.finishTowerRun(true, "Tower complete");
+          }
         } else {
           this.time.delayedCall(280, () => {
             this.player.setPosition(this.scale.width / 2, this.scale.height * 0.76);
             this.updateTowerPlayerState("idle");
             this.drawSkyTowerBackground();
+            if (this.isTutorial) this.tutorialStep = Math.min(this.tutorialStep + 1, SKY_TOWER_TUTORIAL_STEPS.length);
             this.createRound();
           });
         }
     });
+  }
+
+  completeTowerTutorial() {
+    saveSkyTowerTutorialState();
+    this.time.delayedCall(420, () => this.scene.start("tutorialComplete"));
   }
 
   playTowerJumpAnimation(_fromBlock, toBlock, onComplete) {
@@ -1353,7 +1624,9 @@ class SkyTowerScene extends Phaser.Scene {
   handleWrongBlock(block) {
     towerState.roundState = "feedback";
     towerState.combo = 0;
-    towerState.lives = Math.max(0, towerState.lives - 1);
+    if (!this.isTutorial) {
+      towerState.lives = Math.max(0, towerState.lives - 1);
+    }
     if (shouldRecordLearningResult(towerState.currentProblem)) {
       saveLearningStats(updateLearningStats(loadLearningStats(), towerState.currentProblem, false, towerState.stageId));
     }
@@ -1374,6 +1647,9 @@ class SkyTowerScene extends Phaser.Scene {
           this.finishTowerRun(false, "No hearts left");
         } else {
           this.updateTowerPlayerState("idle");
+          if (this.isTutorial) {
+            this.updateTutorialCopy("It's okay! Try again.\nPick the safe answer block.");
+          }
           towerState.roundState = "waitingForAnswer";
         }
       }
@@ -1385,9 +1661,9 @@ class SkyTowerScene extends Phaser.Scene {
     const emptyHeart = "\u2661";
     this.livesText.setText(`${fullHeart.repeat(towerState.lives)}${emptyHeart.repeat(3 - towerState.lives)}`);
     this.heightText.setText(`${towerState.currentHeight} / ${towerState.targetHeight}`);
-    this.comboText.setText(towerState.combo ? `COMBO x${towerState.combo}` : this.stage.name);
+    this.comboText.setText(towerState.combo ? `COMBO x${towerState.combo}` : this.isTutorial ? `Practice ${this.tutorialStep} / ${SKY_TOWER_TUTORIAL_STEPS.length}` : this.stage.name);
     this.scoreText?.setText(`Score ${towerState.score}`);
-    this.towerHintText?.setAlpha(towerState.currentHeight < 2 ? 0.84 : 0);
+    this.towerHintText?.setAlpha(this.isTutorial || towerState.currentHeight < 2 ? 0.84 : 0);
   }
 
   finishTowerRun(cleared, reason) {
