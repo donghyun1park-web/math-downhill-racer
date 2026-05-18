@@ -56,7 +56,8 @@ const UI_SAFE_ZONES = {
   problemBanner: { topRatio: 0.055, bottomRatio: 0.16 },
   hud: { topFromBottom: 124 },
   jumpButton: { right: 126, bottom: 160 },
-  riderFocus: { topRatio: 0.66, bottomRatio: 0.96 }
+  riderFocus: { topRatio: 0.66, bottomRatio: 0.96 },
+  cockpitFocus: { topRatio: 0.68, bottomRatio: 1.0 }
 };
 const DEBUG_TOUCH_ENABLED = new URLSearchParams(location.search).get("debugTouch") === "1"
   || localStorage.getItem("math-downhill-debug-touch") === "1";
@@ -70,12 +71,12 @@ const DEBUG_RACE_FEEL_ENABLED = new URLSearchParams(location.search).get("debugR
   || localStorage.getItem("math-downhill-debug-race-feel") === "1";
 const ASSETS = {
   mtbCockpitSvg: "assets/sprites/mtb_cockpit.svg",
-  mtbCockpitGeneratedNormal: "assets/sprites/generated/mtb_cockpit_normal.png",
-  mtbCockpitGeneratedLeft: "assets/sprites/generated/mtb_cockpit_left.png",
-  mtbCockpitGeneratedRight: "assets/sprites/generated/mtb_cockpit_right.png",
-  mtbCockpitGeneratedBoost: "assets/sprites/generated/mtb_cockpit_boost.png",
-  mtbCockpitGeneratedJump: "assets/sprites/generated/mtb_cockpit_jump.png",
-  mtbCockpitGeneratedLand: "assets/sprites/generated/mtb_cockpit_land.png",
+  mtbCockpitNormal: "assets/sprites/generated/mtb_cockpit_normal.png",
+  mtbCockpitLeft: "assets/sprites/generated/mtb_cockpit_left.png",
+  mtbCockpitRight: "assets/sprites/generated/mtb_cockpit_right.png",
+  mtbCockpitBoost: "assets/sprites/generated/mtb_cockpit_boost.png",
+  mtbCockpitJump: "assets/sprites/generated/mtb_cockpit_jump.png",
+  mtbCockpitLand: "assets/sprites/generated/mtb_cockpit_land.png",
   rider: "assets/sprites/rider.svg",
   riderBoost: "assets/sprites/rider_boost.svg",
   riderJump: "assets/sprites/rider_jump.svg",
@@ -441,6 +442,12 @@ class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.image("mtbCockpitNormal", ASSETS.mtbCockpitNormal);
+    this.load.image("mtbCockpitLeft", ASSETS.mtbCockpitLeft);
+    this.load.image("mtbCockpitRight", ASSETS.mtbCockpitRight);
+    this.load.image("mtbCockpitBoost", ASSETS.mtbCockpitBoost);
+    this.load.image("mtbCockpitJump", ASSETS.mtbCockpitJump);
+    this.load.image("mtbCockpitLand", ASSETS.mtbCockpitLand);
     this.load.svg("mtbCockpitSvg", ASSETS.mtbCockpitSvg);
     this.load.svg("rider", ASSETS.rider);
     this.load.svg("riderBoost", ASSETS.riderBoost);
@@ -1266,7 +1273,7 @@ class RaceScene extends Phaser.Scene {
 
   createRider() {
     if (FIRST_PERSON_MTB_VIEW) {
-      this.createCockpitView();
+      this.createMtbCockpit();
       return;
     }
     const { width, height } = this.scale;
@@ -1283,7 +1290,7 @@ class RaceScene extends Phaser.Scene {
     this.drawRider(0);
   }
 
-  createCockpitView() {
+  createMtbCockpit() {
     const { width } = this.scale;
     this.visualMode = this.getFirstPersonVisualMode();
     this.rider = this.add.container(width / 2, this.getRiderBaseY()).setDepth(24);
@@ -1301,9 +1308,13 @@ class RaceScene extends Phaser.Scene {
     this.drawRider(0);
   }
 
+  createCockpitView() {
+    return this.createMtbCockpit();
+  }
+
   drawRider(lean) {
     if (FIRST_PERSON_MTB_VIEW) {
-      this.updateCockpitView(lean);
+      this.updateMtbCockpit(lean);
       return;
     }
     if (this.riderSprite) {
@@ -1346,7 +1357,7 @@ class RaceScene extends Phaser.Scene {
     this.body.lineBetween(12 + leanOffset, 2, 24 + leanOffset, 36);
   }
 
-  updateCockpitView(lean) {
+  updateMtbCockpit(lean) {
     const { width, height } = this.scale;
     this.visualMode = this.getFirstPersonVisualMode();
     const key = this.getCockpitTextureKey(lean);
@@ -1357,7 +1368,7 @@ class RaceScene extends Phaser.Scene {
     const leanAngle = Phaser.Math.Clamp(lean * 5.5, -7, 7);
 
     if (this.riderSprite) {
-      if (this.hasTexture(key) && this.riderSprite.texture.key !== key) this.riderSprite.setTexture(key);
+      this.setCockpitTexture(key);
       this.riderSprite
         .setPosition(childX, 8 - liftRatio * 22 + state.riderLandPulse * 8)
         .setDisplaySize(displayWidth, displayHeight)
@@ -1373,6 +1384,15 @@ class RaceScene extends Phaser.Scene {
       .setAlpha(0.24 - liftRatio * 0.1 + state.riderLandPulse * 0.14);
     if (this.flame?.setAlpha) this.flame.setAlpha(state.boost > 8 || state.boostPulse > 0 ? 0.76 : 0);
     if (this.flame?.setPosition) this.flame.setPosition(childX - width * 0.18, -displayHeight * 0.42);
+  }
+
+  updateCockpitView(lean) {
+    return this.updateMtbCockpit(lean);
+  }
+
+  setCockpitTexture(key) {
+    if (!this.riderSprite || !this.hasTexture(key)) return;
+    if (this.riderSprite.texture.key !== key) this.riderSprite.setTexture(key);
   }
 
   drawCockpitGraphics(x, lean, displayWidth, displayHeight, liftRatio) {
@@ -1417,25 +1437,38 @@ class RaceScene extends Phaser.Scene {
   }
 
   getCockpitTextureKey(lean) {
-    const pngStateKeys = state.jumping
-      ? ["mtbCockpitGeneratedJump"]
-      : state.riderLandPulse > 0
-        ? ["mtbCockpitGeneratedLand"]
-        : state.boost > 8 || state.boostPulse > 0
-          ? ["mtbCockpitGeneratedBoost"]
-          : lean < -0.25
-            ? ["mtbCockpitGeneratedLeft"]
-            : lean > 0.25
-              ? ["mtbCockpitGeneratedRight"]
-              : ["mtbCockpitGeneratedNormal"];
+    const cockpitState = this.getCockpitState(lean);
+    const pngStateKeys = {
+      jump: ["mtbCockpitJump"],
+      land: ["mtbCockpitLand"],
+      boost: ["mtbCockpitBoost"],
+      left: ["mtbCockpitLeft"],
+      right: ["mtbCockpitRight"],
+      slide: lean < -0.1 ? ["mtbCockpitLeft"] : lean > 0.1 ? ["mtbCockpitRight"] : ["mtbCockpitNormal"],
+      normal: ["mtbCockpitNormal"]
+    }[cockpitState] || ["mtbCockpitNormal"];
     return this.firstTextureKey([...pngStateKeys, "mtbCockpitSvg", "riderMtbLarge", "rider"]);
   }
 
+  getCockpitState(lean = 0) {
+    if (state.jumping || state.raceFeel.isAirborne) return "jump";
+    if (state.riderLandPulse > 0 || state.raceFeel.landingTime > 0) return "land";
+    if (state.riderSlidePulse > 0 || state.warningPulse > 0.45 || state.raceFeel.slideTime > 0 || state.raceFeel.collisionTime > 0) return "slide";
+    if (state.boost > 8 || state.boostPulse > 0 || state.raceFeel.boostTime > 0.05) return "boost";
+    if (lean < -0.25 || state.raceFeel.lateralVelocity < -35) return "left";
+    if (lean > 0.25 || state.raceFeel.lateralVelocity > 35) return "right";
+    return "normal";
+  }
+
   getFirstPersonVisualMode() {
-    if (["mtbCockpitGeneratedNormal", "mtbCockpitGeneratedLeft", "mtbCockpitGeneratedRight", "mtbCockpitGeneratedBoost", "mtbCockpitGeneratedJump", "mtbCockpitGeneratedLand"].some((key) => this.hasTexture(key))) return "cockpit-png";
+    if (this.isGeneratedCockpitLoaded()) return "cockpit-png";
     if (this.hasTexture("mtbCockpitSvg")) return "cockpit-svg";
     if (this.hasTexture("riderMtbLarge") || this.hasTexture("rider")) return "rider-svg";
     return "graphics";
+  }
+
+  isGeneratedCockpitLoaded() {
+    return ["mtbCockpitNormal", "mtbCockpitLeft", "mtbCockpitRight", "mtbCockpitBoost", "mtbCockpitJump", "mtbCockpitLand"].some((key) => this.hasTexture(key));
   }
 
   getCockpitScreenHeightRatio() {
@@ -1824,11 +1857,17 @@ class RaceScene extends Phaser.Scene {
         y: height * UI_SAFE_ZONES.riderFocus.topRatio,
         width: width * 0.64,
         height: height * (UI_SAFE_ZONES.riderFocus.bottomRatio - UI_SAFE_ZONES.riderFocus.topRatio)
+      },
+      cockpitFocus: {
+        x: width * 0.08,
+        y: height * UI_SAFE_ZONES.cockpitFocus.topRatio,
+        width: width * 0.84,
+        height: height * (UI_SAFE_ZONES.cockpitFocus.bottomRatio - UI_SAFE_ZONES.cockpitFocus.topRatio)
       }
     };
   }
 
-  isInUiSafeZone(x, y, zoneNames = ["problemBanner", "hud", "jumpButton", "riderFocus"]) {
+  isInUiSafeZone(x, y, zoneNames = ["problemBanner", "hud", "jumpButton", "riderFocus", "cockpitFocus"]) {
     const zones = this.getUiSafeZones();
     return zoneNames.some((name) => {
       const zone = zones[name];
@@ -2046,9 +2085,11 @@ class RaceScene extends Phaser.Scene {
       .setText([
         "debugMtbRead=1",
         `visual mode: ${this.visualMode || this.getFirstPersonVisualMode?.() || "graphics"}`,
+        `cockpit asset loaded: ${Boolean(this.isGeneratedCockpitLoaded?.())}`,
         `cockpit ratio: ${this.getCockpitScreenHeightRatio?.().toFixed(2) || "0.00"}`,
+        `cockpit state: ${this.getCockpitState?.() || "normal"}`,
         `decor count: ${this.decorativeCourseObjects?.filter((object) => object.visible).length || 0}`,
-        "track mode: first-person simplified",
+        "track mode: first-person cockpit",
         `fallback: ${COCKPIT_FALLBACK_PRIORITY}`
       ].join("\n"));
   }

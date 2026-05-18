@@ -2,6 +2,17 @@
 
 These prompts prepare the first-person MTB cockpit asset pipeline. Do not generate placeholder PNG files in this task. Add real generated PNGs only after reviewing them for mobile readability and file size.
 
+## Cockpit Asset List
+
+```text
+assets/sprites/generated/mtb_cockpit_normal.png
+assets/sprites/generated/mtb_cockpit_left.png
+assets/sprites/generated/mtb_cockpit_right.png
+assets/sprites/generated/mtb_cockpit_boost.png
+assets/sprites/generated/mtb_cockpit_jump.png
+assets/sprites/generated/mtb_cockpit_land.png
+```
+
 ## Shared Direction
 
 Use these constraints for every image:
@@ -24,6 +35,7 @@ no full rider body
 no rear wheel
 no team jersey
 no text baked into the asset
+no logos
 ```
 
 ## mtb_cockpit_normal.png

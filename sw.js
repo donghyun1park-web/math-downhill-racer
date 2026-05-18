@@ -1,4 +1,4 @@
-const CACHE_NAME = "math-downhill-racer-v8";
+const CACHE_NAME = "math-downhill-racer-v9";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -70,9 +70,22 @@ const CORE_ASSETS = [
   "./vendor/phaser.min.js"
 ];
 
+const OPTIONAL_ASSETS = [
+  "./assets/sprites/generated/mtb_cockpit_normal.png",
+  "./assets/sprites/generated/mtb_cockpit_left.png",
+  "./assets/sprites/generated/mtb_cockpit_right.png",
+  "./assets/sprites/generated/mtb_cockpit_boost.png",
+  "./assets/sprites/generated/mtb_cockpit_jump.png",
+  "./assets/sprites/generated/mtb_cockpit_land.png"
+];
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(CORE_ASSETS).then(() =>
+        Promise.allSettled(OPTIONAL_ASSETS.map((asset) => cache.add(asset)))
+      )
+    )
   );
   self.skipWaiting();
 });

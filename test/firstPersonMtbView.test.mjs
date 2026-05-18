@@ -48,7 +48,7 @@ test("main.js includes first-person cockpit view state and debug readout", () =>
   assert.match(main, /updateCockpitView\s*\(/);
   assert.match(main, /getCockpitTextureKey\s*\(/);
   assert.match(main, /debugMtbRead/);
-  assert.match(main, /track mode: first-person simplified/);
+  assert.match(main, /track mode: first-person cockpit/);
 });
 
 test("first-person view keeps simplified track and math defaults", () => {
