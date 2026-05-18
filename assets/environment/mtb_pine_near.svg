@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 150" role="img" aria-labelledby="title">
+  <title id="title">pine near decorative object</title>
+  <g id="pine-near" class="pine">
+    <path d="M49 126v19" stroke="#5b341c" stroke-width="10" stroke-linecap="round"/>
+    <path d="M48 6 12 70h22L6 112h84L62 70h22z" fill="#0c3a31"/>
+    <path d="M48 6 24 62h18L20 102h58L56 62h18z" fill="#155746"/>
+    <path d="M32 57c18 8 34 5 48-7" stroke="#e9f8ff" stroke-width="8" stroke-linecap="round" opacity=".82"/>
+    <path d="M20 101c24 10 49 8 70-8" stroke="#d4f2ff" stroke-width="9" stroke-linecap="round" opacity=".72"/>
+  </g>
+</svg>

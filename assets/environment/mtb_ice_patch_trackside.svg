@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 114 52" role="img" aria-labelledby="title">
+  <title id="title">ice-patch trackside decorative object</title>
+  <g id="ice-patch-trackside" class="ice-patch">
+    <path d="M6 34c22-18 70-23 101-2-15 18-73 20-101 2z" fill="#7ee8ff" opacity=".58"/>
+    <path d="M23 33h30M59 25l-14 17M72 30h26" stroke="#e8fcff" stroke-width="4" stroke-linecap="round" opacity=".78"/>
+  </g>
+</svg>

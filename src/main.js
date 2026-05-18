@@ -91,6 +91,15 @@ const ASSETS = {
   mtbTireTracks: "assets/environment/mtb_tire_tracks.svg",
   mtbBankCurve: "assets/environment/mtb_bank_curve.svg",
   mtbCourseMarker: "assets/environment/mtb_course_marker.svg",
+  mtbPineNear: "assets/environment/mtb_pine_near.svg",
+  mtbPineFar: "assets/environment/mtb_pine_far.svg",
+  mtbSnowBankLarge: "assets/environment/mtb_snow_bank_large.svg",
+  mtbSnowBankSmall: "assets/environment/mtb_snow_bank_small.svg",
+  mtbRockTrackside: "assets/environment/mtb_rock_trackside.svg",
+  mtbIcePatchTrackside: "assets/environment/mtb_ice_patch_trackside.svg",
+  mtbBannerMathSpeed: "assets/environment/mtb_banner_math_speed.svg",
+  mtbCheckpointFlag: "assets/environment/mtb_checkpoint_flag.svg",
+  mtbSpectatorFlag: "assets/environment/mtb_spectator_flag.svg",
   boostSpark: "assets/effects/boost_spark.svg"
 };
 
@@ -419,6 +428,15 @@ class BootScene extends Phaser.Scene {
     this.load.svg("mtbTireTracks", ASSETS.mtbTireTracks);
     this.load.svg("mtbBankCurve", ASSETS.mtbBankCurve);
     this.load.svg("mtbCourseMarker", ASSETS.mtbCourseMarker);
+    this.load.svg("mtbPineNear", ASSETS.mtbPineNear);
+    this.load.svg("mtbPineFar", ASSETS.mtbPineFar);
+    this.load.svg("mtbSnowBankLarge", ASSETS.mtbSnowBankLarge);
+    this.load.svg("mtbSnowBankSmall", ASSETS.mtbSnowBankSmall);
+    this.load.svg("mtbRockTrackside", ASSETS.mtbRockTrackside);
+    this.load.svg("mtbIcePatchTrackside", ASSETS.mtbIcePatchTrackside);
+    this.load.svg("mtbBannerMathSpeed", ASSETS.mtbBannerMathSpeed);
+    this.load.svg("mtbCheckpointFlag", ASSETS.mtbCheckpointFlag);
+    this.load.svg("mtbSpectatorFlag", ASSETS.mtbSpectatorFlag);
     this.load.svg("boostSpark", ASSETS.boostSpark);
   }
 
@@ -831,6 +849,9 @@ class RaceScene extends Phaser.Scene {
     this.coursePoles = [];
     this.courseArrows = [];
     this.rampProps = [];
+    this.decorativeCourseObjects = [];
+    this.parallaxScroll = 0;
+    this.createParallaxLayers();
     this.sky = this.add.graphics();
     this.mountainBack = this.add.graphics();
     this.track = this.add.graphics();
@@ -897,6 +918,8 @@ class RaceScene extends Phaser.Scene {
       this.rampProps.push(ramp);
     }
 
+    this.createCourseObjectPool();
+
     for (let i = 0; i < speedLineCount; i += 1) {
       const speedLine = this.add.rectangle(0, 0, 3, 96, 0xffffff, 0).setDepth(65);
       speedLine.setData("side", i % 2 === 0 ? -1 : 1);
@@ -916,7 +939,133 @@ class RaceScene extends Phaser.Scene {
     this.courseTape.forEach((item, index) => item.setVisible(!lowEffects || index < 4));
     this.coursePoles.forEach((item, index) => item.setVisible(!lowEffects || index < 6));
     this.courseArrows.forEach((item, index) => item.setVisible(!lowEffects || index < 4));
+    this.decorativeCourseObjects.forEach((item, index) => item.setVisible(!lowEffects || index < Math.ceil(this.decorativeCourseObjects.length * 0.55)));
     this.rampProps.forEach((item, index) => item.setVisible(!lowEffects || index < 1));
+  }
+
+  getStageDecorationProfile() {
+    const profiles = {
+      // Stage 1 Snow Trail: snow banks first, light trees.
+      1: { key: "snowTrail", count: 16, pine: 2, snow: 6, rock: 2, ice: 1, banner: 1, flag: 4, speed: 0.92 },
+      // Stage 2 Forest Rush: more pines and tape-side flags.
+      2: { key: "forestRush", count: 22, pine: 8, snow: 3, rock: 3, ice: 1, banner: 2, flag: 5, speed: 1.0 },
+      // Stage 3 Ice Bridge: ice and cold trackside objects read first.
+      3: { key: "iceBridge", count: 22, pine: 3, snow: 4, rock: 2, ice: 7, banner: 2, flag: 4, speed: 1.04 },
+      // Stage 4 Alpine Jump: checkpoint flags and banners around ramps.
+      4: { key: "alpineJump", count: 24, pine: 3, snow: 4, rock: 4, ice: 2, banner: 4, flag: 7, speed: 1.08 },
+      // Stage 5 Storm Descent: dense race dressing without changing gameplay.
+      5: { key: "stormDescent", count: 26, pine: 5, snow: 4, rock: 4, ice: 3, banner: 5, flag: 5, speed: 1.14 }
+    };
+    return profiles[state.stage.id] || profiles[1];
+  }
+
+  createParallaxLayers() {
+    this.parallaxLayers = {
+      farMountains: this.add.graphics().setDepth(1),
+      midForest: this.add.graphics().setDepth(2),
+      nearCourse: this.add.graphics().setDepth(6)
+    };
+  }
+
+  updateParallaxLayers(delta, speedFactor) {
+    this.parallaxScroll = (this.parallaxScroll + delta * 0.026 * speedFactor) % 1000;
+    this.drawFarMountains(this.parallaxScroll * 0.12);
+    this.drawMidForest(this.parallaxScroll * 0.36);
+    this.drawNearCourseDecorations(this.parallaxScroll * 0.82);
+  }
+
+  drawFarMountains(scroll = 0) {
+    const { width, height } = this.scale;
+    const g = this.parallaxLayers?.farMountains || this.mountainBack;
+    if (!g) return;
+    const offset = (scroll % 36) - 18;
+    g.clear();
+    g.fillStyle(0x183a57, 0.88);
+    g.fillTriangle(-58 + offset, height * 0.48, width * 0.28 + offset, height * 0.14, width * 0.68 + offset, height * 0.48);
+    g.fillStyle(0x245d78, 0.8);
+    g.fillTriangle(width * 0.1 - offset, height * 0.5, width * 0.7 - offset, height * 0.1, width + 70 - offset, height * 0.5);
+    g.fillStyle(0xe8f6ff, 0.92);
+    g.fillTriangle(width * 0.22 + offset, height * 0.2, width * 0.28 + offset, height * 0.14, width * 0.37 + offset, height * 0.24);
+    g.fillTriangle(width * 0.62 - offset, height * 0.16, width * 0.7 - offset, height * 0.1, width * 0.8 - offset, height * 0.22);
+  }
+
+  drawMidForest(scroll = 0) {
+    const { width, height } = this.scale;
+    const g = this.parallaxLayers?.midForest;
+    if (!g) return;
+    const count = state.performance.lowEffectsMode ? 7 : 13;
+    g.clear();
+    for (let i = 0; i < count; i += 1) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const y = height * 0.28 + ((scroll + i * 57) % (height * 0.3));
+      const scale = this.getPerspectiveScale(y) * 0.72;
+      const x = this.getTrackEdgeX(y, side, width * 0.18 + scale * 24);
+      g.fillStyle(0x0b312d, 0.62);
+      g.fillTriangle(x, y - 38 * scale, x - 18 * scale, y + 16 * scale, x + 18 * scale, y + 16 * scale);
+      g.fillStyle(0xdff6ff, 0.24);
+      g.fillRect(x - 12 * scale, y - 2 * scale, 24 * scale, 5 * scale);
+    }
+  }
+
+  drawNearCourseDecorations(scroll = 0) {
+    const { height } = this.scale;
+    const g = this.parallaxLayers?.nearCourse;
+    if (!g) return;
+    g.clear();
+    const count = state.performance.lowEffectsMode ? 4 : 9;
+    for (let i = 0; i < count; i += 1) {
+      const y = height * 0.42 + ((scroll + i * 92) % (height * 0.48));
+      const scale = this.getPerspectiveScale(y);
+      const center = this.getTrackCenterAtY(y);
+      const widthAtY = this.getTrackWidthAtY(y);
+      g.lineStyle(Math.max(1, 2 * scale), i % 2 ? 0x35d4ff : 0xff8b20, 0.18);
+      g.lineBetween(center - widthAtY * 0.38, y, center - widthAtY * 0.16, y + 26 * scale);
+      g.lineBetween(center + widthAtY * 0.38, y, center + widthAtY * 0.16, y + 26 * scale);
+    }
+  }
+
+  createCourseObjectPool() {
+    this.decorativeCourseObjects = [];
+    const profile = this.getStageDecorationProfile();
+    const count = state.performance.lowEffectsMode ? Math.ceil(profile.count * 0.58) : profile.count;
+    const types = [
+      ...Array(profile.pine).fill("pine"),
+      ...Array(profile.snow).fill("snow-bank"),
+      ...Array(profile.rock).fill("rock"),
+      ...Array(profile.ice).fill("ice-patch"),
+      ...Array(profile.banner).fill("banner"),
+      ...Array(profile.flag).fill("checkpoint-flag")
+    ];
+    for (let i = 0; i < count; i += 1) {
+      const type = types[i % types.length] || "snow-bank";
+      const side = i % 2 === 0 ? -1 : 1;
+      const object = this.spawnDecorativeCourseObject(type, side, i * 78 + 36);
+      this.decorativeCourseObjects.push(object);
+    }
+  }
+
+  spawnDecorativeCourseObject(type, laneOrSide, y) {
+    const textureMap = {
+      pine: laneOrSide < 0 ? "mtbPineNear" : "mtbPineFar",
+      "snow-bank": y % 2 ? "mtbSnowBankLarge" : "mtbSnowBankSmall",
+      rock: "mtbRockTrackside",
+      "ice-patch": "mtbIcePatchTrackside",
+      banner: "mtbBannerMathSpeed",
+      "checkpoint-flag": y % 3 ? "mtbCheckpointFlag" : "mtbSpectatorFlag"
+    };
+    const key = textureMap[type] || "mtbSnowBankSmall";
+    const object = this.hasTexture(key) ? this.add.image(0, 0, key).setDepth(7) : this.add.graphics().setDepth(7);
+    object.setData("decorative", true);
+    object.setData("type", type);
+    object.setData("side", laneOrSide);
+    object.setData("offset", y);
+    object.setData("textureKey", key);
+    return object;
+  }
+
+  recycleCourseObject(object) {
+    const profile = this.getStageDecorationProfile();
+    object.setData("offset", object.getData("offset") + profile.count * 78);
   }
 
   getPerspectiveScale(y) {
@@ -1653,7 +1802,9 @@ class RaceScene extends Phaser.Scene {
     state.speed = Phaser.Math.Linear(state.speed, targetSpeed, 0.055);
     state.distance = Math.min(state.stage.targetDistance, state.distance + delta * 0.036 * speedFactor);
 
+    this.updateParallaxLayers(delta, speedFactor);
     this.updateTerrain(time, delta, speedFactor);
+    this.updateCourseObjects(delta, speedFactor);
     this.updateGates(delta, speedFactor);
     this.updateEffects(time, delta, speedFactor);
     this.updateHud();
@@ -1801,6 +1952,71 @@ class RaceScene extends Phaser.Scene {
         ramp.setDepth(Math.floor(y * 0.02) + 10);
       }
     });
+  }
+
+  updateCourseObjects(delta, speedFactor) {
+    const { width, height } = this.scale;
+    const profile = this.getStageDecorationProfile();
+    const lowEffects = state.performance.lowEffectsMode;
+    this.decorativeCourseObjects.forEach((object, index) => {
+      if (!object.visible) return;
+      const side = object.getData("side");
+      const type = object.getData("type");
+      const rawOffset = object.getData("offset") + delta * 0.105 * speedFactor * profile.speed;
+      object.setData("offset", rawOffset);
+      const phase = rawOffset % (height * 0.86);
+      const y = height * 0.29 + phase;
+      if (y > height + 96) this.recycleCourseObject(object);
+      const scale = this.getPerspectiveScale(y);
+      const extraPad = type === "pine" ? width * 0.16 : type === "banner" ? width * 0.12 : width * 0.07;
+      const x = this.getTrackEdgeX(y, side, extraPad + scale * 20);
+      this.drawDecorativeCourseObject(object, x, y, scale, side, index, lowEffects);
+    });
+  }
+
+  drawDecorativeCourseObject(object, x, y, scale, side, index, lowEffects) {
+    const type = object.getData("type");
+    const key = object.getData("textureKey");
+    object.setDepth(Math.floor(y * 0.02) + (type === "pine" ? 6 : 8));
+    if (object.setTexture && this.hasTexture(key)) {
+      object.setTexture(key);
+      object.setPosition(x, y);
+      const typeScale = {
+        pine: 0.28,
+        "snow-bank": 0.34,
+        rock: 0.28,
+        "ice-patch": 0.32,
+        banner: 0.24,
+        "checkpoint-flag": 0.26
+      }[type] || 0.28;
+      object.setScale(typeScale * scale);
+      object.setAlpha((lowEffects ? 0.56 : 0.72) + Math.min(scale * 0.18, 0.22));
+      object.setFlipX(side < 0);
+      return;
+    }
+
+    object.clear();
+    object.setPosition(x, y);
+    object.setScale(scale);
+    if (type === "pine") {
+      object.fillStyle(0x0e3f36, 0.78);
+      object.fillTriangle(0, -34, -20, 18, 20, 18);
+      object.fillStyle(0xdff6ff, 0.36);
+      object.fillRect(-14, 2, 28, 5);
+    } else if (type === "banner") {
+      object.fillStyle(0x071525, 0.78);
+      object.fillRoundedRect(-42, -16, 84, 32, 4);
+      object.lineStyle(3, 0x35d4ff, 0.7);
+      object.strokeRoundedRect(-42, -16, 84, 32, 4);
+    } else if (type === "checkpoint-flag") {
+      object.lineStyle(4, 0xf8fbff, 0.82);
+      object.lineBetween(0, -42, 0, 34);
+      object.fillStyle(index % 2 ? 0xff8b20 : 0x35d4ff, 0.86);
+      object.fillTriangle(0, -38, side * 34, -26, 0, -12);
+    } else {
+      object.fillStyle(type === "ice-patch" ? 0x7ee8ff : type === "rock" ? 0x6b7f8f : 0xf4fbff, 0.68);
+      object.fillEllipse(0, 0, 58, 22);
+    }
   }
 
   drawCourseProp(prop, x, y, depth, side, index) {

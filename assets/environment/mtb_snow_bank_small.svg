@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 86 42" role="img" aria-labelledby="title">
+  <title id="title">snow-bank small trackside object</title>
+  <g id="snow-bank-small" class="snow-bank">
+    <path d="M5 33c8-13 21-17 35-10 9-13 27-10 33 10z" fill="#f8fdff"/>
+    <path d="M9 34h67" stroke="#a7def3" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+  </g>
+</svg>

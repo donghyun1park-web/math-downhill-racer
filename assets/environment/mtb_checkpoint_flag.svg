@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 86 128" role="img" aria-labelledby="title">
+  <title id="title">checkpoint-flag decorative object</title>
+  <g id="checkpoint-flag" class="checkpoint-flag flag">
+    <path d="M23 116V14" stroke="#eaf8ff" stroke-width="7" stroke-linecap="round"/>
+    <path d="M28 18h46L63 44l11 26H28z" fill="#ff8b20" stroke="#fff4c7" stroke-width="4"/>
+    <path d="M38 26v36M52 26v36" stroke="#071525" stroke-width="5" opacity=".7"/>
+  </g>
+</svg>

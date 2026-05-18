@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84 62" role="img" aria-labelledby="title">
+  <title id="title">rock trackside decorative object</title>
+  <g id="rock-trackside" class="rock">
+    <path d="M8 47 24 15l30-6 23 24-7 20H18z" fill="#5d7181"/>
+    <path d="M24 15 37 38 54 9M37 38l33 15" stroke="#9fb5c3" stroke-width="4" stroke-linecap="round" opacity=".62"/>
+    <path d="M12 49h58" stroke="#23394a" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+  </g>
+</svg>
