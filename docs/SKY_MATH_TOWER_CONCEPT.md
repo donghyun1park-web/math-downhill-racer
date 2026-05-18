@@ -32,6 +32,26 @@ The math problem is the reason to choose a platform. The answer block is not a q
 - Multiplication and division remain optional.
 - 곱셈/나눗셈 기본 OFF 원칙은 반드시 유지한다.
 
+## Visual Direction
+
+Sky Math Tower should read as a bright vertical adventure before it reads as a quiz screen.
+
+- bright sky
+- clouds
+- floating stone or crystal blocks
+- distant tower
+- deep cliff below
+- soft fantasy adventure style
+- clear answer numbers on blocks
+- friendly but slightly tense height feeling
+
+Forbidden direction:
+
+- MTB graphics should not be reused in the default tower mode.
+- Racing HUD panels, speedometers, BOOST/TEMP race UI, cockpit art, and downhill track visuals should not appear in the Sky Tower play screen.
+- The background should not be too dark.
+- Decorative detail must never make answer numbers hard to read.
+
 ## Graphics Direction
 
 The first playable pass uses Phaser Graphics:
