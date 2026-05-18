@@ -38,11 +38,15 @@ const JUMP_ZONE_SIZE = 88;
 const SAFE_BOTTOM_FALLBACK = 16;
 const TOUCH_REPEAT_MS = 230;
 const TOUCH_TOP_DEAD_ZONE = 172;
+const FIRST_PERSON_MTB_VIEW = true;
+const FIRST_PERSON_SIMPLIFIED_TRACK = true;
+const COCKPIT_SCREEN_HEIGHT_RATIO = 0.27;
+const COCKPIT_FALLBACK_PRIORITY = "cockpit-png > cockpit-svg > rider-svg > graphics";
 const UI_SAFE_ZONES = {
   problemBanner: { topRatio: 0.055, bottomRatio: 0.16 },
   hud: { topFromBottom: 124 },
   jumpButton: { right: 126, bottom: 160 },
-  riderFocus: { topRatio: 0.68, bottomRatio: 0.9 }
+  riderFocus: { topRatio: 0.66, bottomRatio: 0.96 }
 };
 const DEBUG_TOUCH_ENABLED = new URLSearchParams(location.search).get("debugTouch") === "1"
   || localStorage.getItem("math-downhill-debug-touch") === "1";
@@ -50,7 +54,16 @@ const DEBUG_PERF_ENABLED = new URLSearchParams(location.search).get("debugPerf")
   || localStorage.getItem("math-downhill-debug-perf") === "1";
 const DEBUG_STORAGE_ENABLED = new URLSearchParams(location.search).get("debugStorage") === "1"
   || localStorage.getItem("math-downhill-debug-storage") === "1";
+const DEBUG_MTB_READ_ENABLED = new URLSearchParams(location.search).get("debugMtbRead") === "1"
+  || localStorage.getItem("math-downhill-debug-mtb-read") === "1";
 const ASSETS = {
+  mtbCockpitSvg: "assets/sprites/mtb_cockpit.svg",
+  mtbCockpitGeneratedNormal: "assets/sprites/generated/mtb_cockpit_normal.png",
+  mtbCockpitGeneratedLeft: "assets/sprites/generated/mtb_cockpit_left.png",
+  mtbCockpitGeneratedRight: "assets/sprites/generated/mtb_cockpit_right.png",
+  mtbCockpitGeneratedBoost: "assets/sprites/generated/mtb_cockpit_boost.png",
+  mtbCockpitGeneratedJump: "assets/sprites/generated/mtb_cockpit_jump.png",
+  mtbCockpitGeneratedLand: "assets/sprites/generated/mtb_cockpit_land.png",
   rider: "assets/sprites/rider.svg",
   riderBoost: "assets/sprites/rider_boost.svg",
   riderJump: "assets/sprites/rider_jump.svg",
@@ -388,6 +401,7 @@ class BootScene extends Phaser.Scene {
   }
 
   preload() {
+    this.load.svg("mtbCockpitSvg", ASSETS.mtbCockpitSvg);
     this.load.svg("rider", ASSETS.rider);
     this.load.svg("riderBoost", ASSETS.riderBoost);
     this.load.svg("riderJump", ASSETS.riderJump);
@@ -836,6 +850,7 @@ class RaceScene extends Phaser.Scene {
     this.createInput();
     this.createDebugTouchOverlay();
     this.createDebugPerfOverlay();
+    this.createDebugMtbReadOverlay();
     this.createGatePair(true);
     this.scale.on("resize", this.handleResize, this);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -873,9 +888,10 @@ class RaceScene extends Phaser.Scene {
     }
 
     const lowEffects = state.performance.lowEffectsMode;
-    const snowCount = lowEffects ? 22 : 46;
-    const propCount = lowEffects ? 12 : 24;
-    const speedLineCount = lowEffects ? 8 : 18;
+    const densityScale = this.getDecorativeDensityScale();
+    const snowCount = Math.max(14, Math.round((lowEffects ? 22 : 46) * densityScale));
+    const propCount = Math.max(8, Math.round((lowEffects ? 12 : 24) * densityScale));
+    const speedLineCount = Math.max(6, Math.round((lowEffects ? 8 : 18) * densityScale));
 
     for (let i = 0; i < snowCount; i += 1) {
       const flake = this.add.circle(
@@ -939,14 +955,21 @@ class RaceScene extends Phaser.Scene {
 
   applyLowEffectsVisibility() {
     const lowEffects = state.performance.lowEffectsMode;
+    const densityScale = this.getDecorativeDensityScale();
     this.snow.forEach((item, index) => item.setVisible(!lowEffects || index < 22));
     this.props.forEach((item, index) => item.setVisible(!lowEffects || index < 10));
     this.speedLines.forEach((item, index) => item.setVisible(!lowEffects || index < 8));
-    this.courseTape.forEach((item, index) => item.setVisible(!lowEffects || index < 4));
-    this.coursePoles.forEach((item, index) => item.setVisible(!lowEffects || index < 6));
-    this.courseArrows.forEach((item, index) => item.setVisible(!lowEffects || index < 4));
-    this.decorativeCourseObjects.forEach((item, index) => item.setVisible(!lowEffects || index < Math.ceil(this.decorativeCourseObjects.length * 0.55)));
+    this.courseTape.forEach((item, index) => item.setVisible(index < Math.ceil(this.courseTape.length * densityScale) && (!lowEffects || index < 4)));
+    this.coursePoles.forEach((item, index) => item.setVisible(index < Math.ceil(this.coursePoles.length * densityScale) && (!lowEffects || index < 6)));
+    this.courseArrows.forEach((item, index) => item.setVisible(index < Math.ceil(this.courseArrows.length * densityScale) && (!lowEffects || index < 4)));
+    this.decorativeCourseObjects.forEach((item, index) => item.setVisible(index < Math.ceil(this.decorativeCourseObjects.length * densityScale) && (!lowEffects || index < Math.ceil(this.decorativeCourseObjects.length * 0.55))));
     this.rampProps.forEach((item, index) => item.setVisible(!lowEffects || index < 1));
+  }
+
+  getDecorativeDensityScale() {
+    const simplified = FIRST_PERSON_SIMPLIFIED_TRACK ? 0.62 : 1;
+    const lowEffects = state.performance.lowEffectsMode ? 0.72 : 1;
+    return simplified * lowEffects;
   }
 
   getStageDecorationProfile() {
@@ -999,7 +1022,7 @@ class RaceScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const g = this.parallaxLayers?.midForest;
     if (!g) return;
-    const count = state.performance.lowEffectsMode ? 7 : 13;
+    const count = Math.max(4, Math.round((state.performance.lowEffectsMode ? 7 : 13) * this.getDecorativeDensityScale()));
     g.clear();
     for (let i = 0; i < count; i += 1) {
       const side = i % 2 === 0 ? -1 : 1;
@@ -1018,7 +1041,7 @@ class RaceScene extends Phaser.Scene {
     const g = this.parallaxLayers?.nearCourse;
     if (!g) return;
     g.clear();
-    const count = state.performance.lowEffectsMode ? 4 : 9;
+    const count = Math.max(3, Math.round((state.performance.lowEffectsMode ? 4 : 9) * this.getDecorativeDensityScale()));
     for (let i = 0; i < count; i += 1) {
       const y = height * 0.42 + ((scroll + i * 92) % (height * 0.48));
       const scale = this.getPerspectiveScale(y);
@@ -1033,7 +1056,7 @@ class RaceScene extends Phaser.Scene {
   createCourseObjectPool() {
     this.decorativeCourseObjects = [];
     const profile = this.getStageDecorationProfile();
-    const count = state.performance.lowEffectsMode ? Math.ceil(profile.count * 0.58) : profile.count;
+    const count = Math.max(8, Math.ceil((state.performance.lowEffectsMode ? profile.count * 0.58 : profile.count) * this.getDecorativeDensityScale()));
     const types = [
       ...Array(profile.pine).fill("pine"),
       ...Array(profile.snow).fill("snow-bank"),
@@ -1197,6 +1220,10 @@ class RaceScene extends Phaser.Scene {
   }
 
   createRider() {
+    if (FIRST_PERSON_MTB_VIEW) {
+      this.createCockpitView();
+      return;
+    }
     const { width, height } = this.scale;
     this.rider = this.add.container(width / 2, height * 0.79).setDepth(20);
     this.flame = this.hasTexture("boostFlame") ? this.add.image(-82, 18, "boostFlame").setDisplaySize(72, 104).setAlpha(0) : this.add.graphics();
@@ -1211,9 +1238,32 @@ class RaceScene extends Phaser.Scene {
     this.drawRider(0);
   }
 
+  createCockpitView() {
+    const { width } = this.scale;
+    this.visualMode = this.getFirstPersonVisualMode();
+    this.rider = this.add.container(width / 2, this.getRiderBaseY()).setDepth(24);
+    this.shadow = this.hasTexture("bikeShadow")
+      ? this.add.image(0, -16, "bikeShadow").setDisplaySize(width * 0.46, 28).setAlpha(0.28)
+      : this.add.ellipse(0, -16, width * 0.42, 24, 0x000000, 0.24);
+    this.flame = this.hasTexture("boostFlame") ? this.add.image(-80, -82, "boostFlame").setDisplaySize(58, 96).setAlpha(0) : this.add.graphics();
+    const cockpitKey = this.getCockpitTextureKey(0);
+    this.cockpitSprite = this.hasTexture(cockpitKey) ? this.add.image(0, 0, cockpitKey).setOrigin(0.5, 1) : null;
+    this.riderSprite = this.cockpitSprite || (this.hasTexture("riderMtbLarge") ? this.add.image(0, -38, "riderMtbLarge").setOrigin(0.5, 1) : null);
+    this.cockpitGraphics = this.riderSprite ? null : this.add.graphics();
+    this.bike = null;
+    this.body = null;
+    this.rider.add([this.shadow, this.flame, this.riderSprite, this.cockpitGraphics].filter(Boolean));
+    this.drawRider(0);
+  }
+
   drawRider(lean) {
+    if (FIRST_PERSON_MTB_VIEW) {
+      this.updateCockpitView(lean);
+      return;
+    }
     if (this.riderSprite) {
-      const key = this.getRiderTextureKey(lean);
+      const textureGetter = this.getRiderTextureKey;
+      const key = textureGetter.call(this, lean);
       if (this.hasTexture(key) && this.riderSprite.texture.key !== key) this.riderSprite.setTexture(key);
       const size = this.getRiderDisplaySize(key);
       this.riderSprite.setDisplaySize(size.width, size.height);
@@ -1251,6 +1301,62 @@ class RaceScene extends Phaser.Scene {
     this.body.lineBetween(12 + leanOffset, 2, 24 + leanOffset, 36);
   }
 
+  updateCockpitView(lean) {
+    const { width, height } = this.scale;
+    this.visualMode = this.getFirstPersonVisualMode();
+    const key = this.getCockpitTextureKey(lean);
+    const childX = width / 2 - this.rider.x + lean * 8;
+    const liftRatio = Phaser.Math.Clamp((this.getRiderBaseY() - this.rider.y) / (height * 0.19), 0, 1);
+    const displayHeight = height * this.getCockpitScreenHeightRatio();
+    const displayWidth = Math.min(width * 1.14, displayHeight * 1.86);
+    const leanAngle = Phaser.Math.Clamp(lean * 5.5, -7, 7);
+
+    if (this.riderSprite) {
+      if (this.hasTexture(key) && this.riderSprite.texture.key !== key) this.riderSprite.setTexture(key);
+      this.riderSprite
+        .setPosition(childX, 8 - liftRatio * 22 + state.riderLandPulse * 8)
+        .setDisplaySize(displayWidth, displayHeight)
+        .setAngle(key === "mtbCockpitSvg" ? leanAngle : leanAngle * 0.7)
+        .setAlpha(this.visualMode === "rider-svg" ? 0.84 : 1);
+    } else {
+      this.drawCockpitGraphics(childX, lean, displayWidth, displayHeight, liftRatio);
+    }
+
+    this.shadow
+      ?.setPosition(childX, -18 + liftRatio * 20)
+      .setScale(1 - liftRatio * 0.45 + state.riderLandPulse * 0.18, 1 - liftRatio * 0.5 + state.riderLandPulse * 0.12)
+      .setAlpha(0.24 - liftRatio * 0.1 + state.riderLandPulse * 0.14);
+    if (this.flame?.setAlpha) this.flame.setAlpha(state.boost > 8 || state.boostPulse > 0 ? 0.76 : 0);
+    if (this.flame?.setPosition) this.flame.setPosition(childX - width * 0.18, -displayHeight * 0.42);
+  }
+
+  drawCockpitGraphics(x, lean, displayWidth, displayHeight, liftRatio) {
+    const g = this.cockpitGraphics;
+    if (!g) return;
+    const y = -liftRatio * 20;
+    const barWidth = displayWidth * 0.72;
+    g.clear();
+    g.setPosition(x, y);
+    g.setRotation(Phaser.Math.DegToRad(lean * 5));
+    g.lineStyle(9, 0xdff8ff, 1);
+    g.lineBetween(-barWidth * 0.5, -displayHeight * 0.42, barWidth * 0.5, -displayHeight * 0.42);
+    g.lineStyle(6, 0x06101e, 1);
+    g.lineBetween(-barWidth * 0.38, -displayHeight * 0.38, -barWidth * 0.18, -displayHeight * 0.2);
+    g.lineBetween(barWidth * 0.38, -displayHeight * 0.38, barWidth * 0.18, -displayHeight * 0.2);
+    g.fillStyle(0x101828, 1);
+    g.fillRoundedRect(-barWidth * 0.58, -displayHeight * 0.49, 70, 36, 14);
+    g.fillRoundedRect(barWidth * 0.38, -displayHeight * 0.49, 70, 36, 14);
+    g.fillStyle(0xff7a18, 1);
+    g.fillRoundedRect(-barWidth * 0.2, -displayHeight * 0.58, barWidth * 0.4, 34, 12);
+    g.lineStyle(12, 0x17253a, 0.9);
+    g.lineBetween(-34, -displayHeight * 0.16, -18, 0);
+    g.lineBetween(34, -displayHeight * 0.16, 18, 0);
+    g.lineStyle(16, 0x07111f, 0.86);
+    g.beginPath();
+    g.arc(0, 8, displayWidth * 0.18, Math.PI * 1.08, Math.PI * 1.92);
+    g.strokePath();
+  }
+
   getRiderTextureKey(lean) {
     if (state.jumping) return this.firstTextureKey(["riderMtbJumpState", "riderMtbJump", "riderJump"]);
     if (state.riderLandPulse > 0) return this.firstTextureKey(["riderMtbLand", "riderMtbLarge", "riderMtb", "rider"]);
@@ -1263,6 +1369,43 @@ class RaceScene extends Phaser.Scene {
 
   firstTextureKey(keys) {
     return keys.find((key) => this.hasTexture(key)) || "rider";
+  }
+
+  getCockpitTextureKey(lean) {
+    const pngStateKeys = state.jumping
+      ? ["mtbCockpitGeneratedJump"]
+      : state.riderLandPulse > 0
+        ? ["mtbCockpitGeneratedLand"]
+        : state.boost > 8 || state.boostPulse > 0
+          ? ["mtbCockpitGeneratedBoost"]
+          : lean < -0.25
+            ? ["mtbCockpitGeneratedLeft"]
+            : lean > 0.25
+              ? ["mtbCockpitGeneratedRight"]
+              : ["mtbCockpitGeneratedNormal"];
+    return this.firstTextureKey([...pngStateKeys, "mtbCockpitSvg", "riderMtbLarge", "rider"]);
+  }
+
+  getFirstPersonVisualMode() {
+    if (["mtbCockpitGeneratedNormal", "mtbCockpitGeneratedLeft", "mtbCockpitGeneratedRight", "mtbCockpitGeneratedBoost", "mtbCockpitGeneratedJump", "mtbCockpitGeneratedLand"].some((key) => this.hasTexture(key))) return "cockpit-png";
+    if (this.hasTexture("mtbCockpitSvg")) return "cockpit-svg";
+    if (this.hasTexture("riderMtbLarge") || this.hasTexture("rider")) return "rider-svg";
+    return "graphics";
+  }
+
+  getCockpitScreenHeightRatio() {
+    if (!FIRST_PERSON_MTB_VIEW) return 0.2;
+    const boostLift = state.boost > 8 || state.boostPulse > 0 ? 0.015 : 0;
+    const jumpLift = state.jumping ? -0.018 : 0;
+    return Phaser.Math.Clamp(COCKPIT_SCREEN_HEIGHT_RATIO + boostLift + jumpLift, 0.22, 0.3);
+  }
+
+  getRiderBaseY() {
+    return FIRST_PERSON_MTB_VIEW ? this.getCockpitBaseY() : this.scale.height * 0.79;
+  }
+
+  getCockpitBaseY() {
+    return this.scale.height - this.getSafeBottom() + 22;
   }
 
   getRiderDisplaySize(key) {
@@ -1396,17 +1539,17 @@ class RaceScene extends Phaser.Scene {
   }
 
   createCompactHud() {
-    this.speedText.setFontSize(34);
-    this.speedUnit.setFontSize(11);
+    this.speedText.setFontSize(FIRST_PERSON_MTB_VIEW ? 24 : 34);
+    this.speedUnit.setFontSize(FIRST_PERSON_MTB_VIEW ? 9 : 11);
     this.statusText.setFontSize(10);
     this.comboText.setFontSize(11);
     this.tempText.setFontSize(10);
-    this.clusterText.setFontSize(10);
+    this.clusterText.setFontSize(FIRST_PERSON_MTB_VIEW ? 9 : 10);
     this.scoreText.setFontSize(22);
     this.questionText.setFontSize(state.mode === "tutorial" ? 23 : 21);
     this.questionText.setWordWrapWidth(this.scale.width - 72);
     this.problemPanel?.setAlpha(0.76);
-    this.hudPanel?.setAlpha(0.62);
+    this.hudPanel?.setAlpha(FIRST_PERSON_MTB_VIEW ? 0.18 : 0.62);
     this.hudVisualStates = {
       normal: 0x35d4ff,
       correct: 0x42ff9b,
@@ -1422,18 +1565,27 @@ class RaceScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const layout = this.getProblemBannerLayout();
     const bottomSafe = this.getSafeBottom();
-    const hudTop = height - 112 - bottomSafe;
+    const hudTop = FIRST_PERSON_MTB_VIEW ? height - 126 - bottomSafe : height - 112 - bottomSafe;
     this.questionText.setFontSize(state.mode === "tutorial" ? 23 : 21);
     this.questionText.setWordWrapWidth(width - 72);
     this.questionText.setPosition(width / 2, layout.y - layout.height * 0.32);
     this.problemPanel?.setPosition(width / 2, layout.y).setDisplaySize(layout.width, layout.height);
-    this.hudPanel?.setPosition(width * 0.5, height - 72 - bottomSafe).setDisplaySize(Math.min(width - 108, 280), 80);
-    this.speedText.setPosition(width * 0.5, hudTop + 26);
-    this.speedUnit.setPosition(width * 0.5, hudTop + 52);
-    this.statusText.setPosition(width * 0.5, hudTop + 72);
+    if (FIRST_PERSON_MTB_VIEW) {
+      this.hudPanel?.setVisible(false);
+      this.speedText.setPosition(84, hudTop + 23);
+      this.speedUnit.setPosition(84, hudTop + 43);
+      this.statusText.setPosition(84, hudTop + 60);
+      this.clusterText.setPosition(width - 118, hudTop + 10);
+      this.tempText.setPosition(width - 118, hudTop + 34);
+    } else {
+      this.hudPanel?.setVisible(true).setPosition(width * 0.5, height - 72 - bottomSafe).setDisplaySize(Math.min(width - 108, 280), 80);
+      this.speedText.setPosition(width * 0.5, hudTop + 26);
+      this.speedUnit.setPosition(width * 0.5, hudTop + 52);
+      this.statusText.setPosition(width * 0.5, hudTop + 72);
+      this.tempText.setPosition(width - 22, hudTop + 8);
+      this.clusterText.setPosition(width - 28, hudTop + 28);
+    }
     this.comboText.setPosition(22, 38);
-    this.tempText.setPosition(width - 22, hudTop + 8);
-    this.clusterText.setPosition(width - 28, hudTop + 28);
     this.scoreText.setX(width - 22);
     this.settingsButton.setPosition(22, height - 42 - bottomSafe);
   }
@@ -1471,9 +1623,9 @@ class RaceScene extends Phaser.Scene {
     const tempColor = this.getTempColor();
     const rpmValue = Phaser.Math.Clamp((state.speed - 50) / 160, 0, 1);
     const bottomSafe = this.getSafeBottom();
-    const hudTop = height - 112 - bottomSafe;
-    const compactPanelWidth = Math.min(width - 108, 280);
-    const panelX = (width - compactPanelWidth) / 2;
+    const hudTop = FIRST_PERSON_MTB_VIEW ? height - 126 - bottomSafe : height - 112 - bottomSafe;
+    const compactPanelWidth = FIRST_PERSON_MTB_VIEW ? 126 : Math.min(width - 108, 280);
+    const panelX = FIRST_PERSON_MTB_VIEW ? 22 : (width - compactPanelWidth) / 2;
 
     this.hudBg.clear();
     this.hudBg.fillStyle(0x020815, 0.42);
@@ -1481,15 +1633,45 @@ class RaceScene extends Phaser.Scene {
     this.hudBg.fillRoundedRect((width - banner.width) / 2, banner.y - banner.height / 2, banner.width, banner.height, 8);
     this.hudBg.lineStyle(2, hudColor, 0.32 + state.hudPulse * 0.3);
     this.hudBg.strokeRoundedRect((width - banner.width) / 2, banner.y - banner.height / 2, banner.width, banner.height, 8);
-    this.hudBg.fillStyle(0x020815, 0.46);
-    this.hudBg.fillRoundedRect(panelX, hudTop, compactPanelWidth, 86, 10);
-    this.hudBg.lineStyle(2, hudColor, 0.34);
-    this.hudBg.strokeRoundedRect(panelX, hudTop, compactPanelWidth, 86, 10);
+    this.hudBg.fillStyle(0x020815, FIRST_PERSON_MTB_VIEW ? 0.34 : 0.46);
+    this.hudBg.fillRoundedRect(panelX, hudTop, compactPanelWidth, FIRST_PERSON_MTB_VIEW ? 66 : 86, 10);
+    this.hudBg.lineStyle(2, hudColor, FIRST_PERSON_MTB_VIEW ? 0.24 : 0.34);
+    this.hudBg.strokeRoundedRect(panelX, hudTop, compactPanelWidth, FIRST_PERSON_MTB_VIEW ? 66 : 86, 10);
 
     this.hudBg.fillStyle(0x0a2034, 0.94);
-    this.hudBg.fillRoundedRect(panelX + 16, hudTop + 70, compactPanelWidth - 32, 5, 3);
+    this.hudBg.fillRoundedRect(panelX + 14, hudTop + (FIRST_PERSON_MTB_VIEW ? 52 : 70), compactPanelWidth - 28, 5, 3);
     this.hudBg.fillStyle(hudColor, 0.95);
-    this.hudBg.fillRoundedRect(panelX + 16, hudTop + 70, Math.max(10, (compactPanelWidth - 32) * (state.boost / 100)), 5, 3);
+    this.hudBg.fillRoundedRect(panelX + 14, hudTop + (FIRST_PERSON_MTB_VIEW ? 52 : 70), Math.max(10, (compactPanelWidth - 28) * (state.boost / 100)), 5, 3);
+
+    if (FIRST_PERSON_MTB_VIEW) {
+      this.rpm.clear();
+      this.dashCluster.clear();
+      this.hudBg.fillStyle(0x020815, 0.28);
+      this.hudBg.fillRoundedRect(width - 156, hudTop, 96, 54, 10);
+      this.hudBg.fillStyle(tempColor, 0.86);
+      this.hudBg.fillRoundedRect(width - 142, hudTop + 40, 68 * Phaser.Math.Clamp(state.grillTemp / 100, 0, 1), 4, 3);
+      this.speedText.setColor(colorToCss(hudColor));
+      this.speedUnit.setColor(colorToCss(hudColor));
+      this.statusText.setColor(colorToCss(hudColor));
+      this.tempText.setColor(colorToCss(tempColor));
+      this.updateCompactHud();
+      const jumpPos = this.getJumpButtonPosition();
+      const jumpReady = !state.jumping && !this.jumpLocked && this.jumpCooldown <= 0;
+      if (jumpReady && !this.jumpWasReady) {
+        const targets = [this.jumpButton, this.jumpButtonArt].filter(Boolean);
+        this.tweens.add({ targets, scale: 1.08, duration: 150, yoyo: true, ease: "Sine.easeOut" });
+      }
+      this.jumpWasReady = jumpReady;
+      this.jumpButtonArt?.setPosition(jumpPos.x, jumpPos.y).setDisplaySize(JUMP_ZONE_SIZE, JUMP_ZONE_SIZE);
+      this.jumpButtonArt?.setAlpha(jumpReady ? 1 : 0.54);
+      this.jumpButton.setPosition(jumpPos.x, jumpPos.y);
+      this.jumpButton.setAlpha(jumpReady ? 1 : 0.58);
+      this.jumpButton.setColor(jumpReady ? "#07111f" : "#9fb7c8");
+      this.distanceText?.setX(width - 24);
+      this.boostIcon?.setPosition(panelX + 24, hudTop + 54);
+      this.tempIcon?.setPosition(width - 150, hudTop + 42);
+      return;
+    }
 
     this.hudBg.fillStyle(0x0a2034, 0.9);
     this.hudBg.fillRoundedRect(width - 120, hudTop + 24, 92, 5, 3);
@@ -1800,6 +1982,32 @@ class RaceScene extends Phaser.Scene {
       ].join("\n"));
   }
 
+  createDebugMtbReadOverlay() {
+    if (!DEBUG_MTB_READ_ENABLED) return;
+    this.debugMtbReadText = this.add.text(12, DEBUG_TOUCH_ENABLED ? 132 : 12, "", {
+      fontFamily: "monospace",
+      fontSize: "11px",
+      color: "#bfffe8",
+      backgroundColor: "rgba(2,8,21,0.72)",
+      padding: { x: 8, y: 6 }
+    }).setDepth(123);
+    this.updateDebugMtbReadOverlay();
+  }
+
+  updateDebugMtbReadOverlay() {
+    if (!this.debugMtbReadText) return;
+    this.debugMtbReadText
+      .setPosition(12, DEBUG_TOUCH_ENABLED ? 132 : 12)
+      .setText([
+        "debugMtbRead=1",
+        `visual mode: ${this.visualMode || this.getFirstPersonVisualMode?.() || "graphics"}`,
+        `cockpit ratio: ${this.getCockpitScreenHeightRatio?.().toFixed(2) || "0.00"}`,
+        `decor count: ${this.decorativeCourseObjects?.filter((object) => object.visible).length || 0}`,
+        "track mode: first-person simplified",
+        `fallback: ${COCKPIT_FALLBACK_PRIORITY}`
+      ].join("\n"));
+  }
+
   setLane(nextLane) {
     this.lane = Phaser.Math.Clamp(nextLane, 0, DESIGN.laneCount - 1);
     this.tweens.add({
@@ -1927,6 +2135,7 @@ class RaceScene extends Phaser.Scene {
     this.updateHud();
     this.updateDebugTouchOverlay();
     this.updateDebugPerfOverlay(delta);
+    this.updateDebugMtbReadOverlay();
 
     if (state.mode === "tutorial") {
       return;
@@ -2328,24 +2537,24 @@ class RaceScene extends Phaser.Scene {
     }
     this.tweens.add({
       targets: this.rider,
-      y: this.scale.height * 0.61,
+      y: this.getRiderBaseY() - this.scale.height * 0.18,
       scale: 1.14,
       duration: 235,
       ease: "Quad.easeOut",
       onUpdate: () => {
-        const lift = Phaser.Math.Clamp((this.scale.height * 0.79 - this.rider.y) / (this.scale.height * 0.18), 0, 1);
+        const lift = Phaser.Math.Clamp((this.getRiderBaseY() - this.rider.y) / (this.scale.height * 0.18), 0, 1);
         this.shadow.setScale(1 - lift * 0.46, 1 - lift * 0.62);
         this.shadow.setAlpha(0.34 - lift * 0.19);
       },
       onComplete: () => {
         this.tweens.add({
           targets: this.rider,
-          y: this.scale.height * 0.79,
+          y: this.getRiderBaseY(),
           scale: 1,
           duration: 245,
           ease: "Quad.easeIn",
           onUpdate: () => {
-            const lift = Phaser.Math.Clamp((this.scale.height * 0.79 - this.rider.y) / (this.scale.height * 0.18), 0, 1);
+            const lift = Phaser.Math.Clamp((this.getRiderBaseY() - this.rider.y) / (this.scale.height * 0.18), 0, 1);
             this.shadow.setScale(1 - lift * 0.46, 1 - lift * 0.62);
             this.shadow.setAlpha(0.34 - lift * 0.19);
           },
@@ -2513,7 +2722,7 @@ class RaceScene extends Phaser.Scene {
   handleResize() {
     this.drawWorld();
     this.drawHud();
-    this.rider.setPosition(this.laneToX(this.lane), this.scale.height * 0.79);
+    this.rider.setPosition(this.laneToX(this.lane), this.getRiderBaseY());
     this.tutorialText?.setX(this.scale.width / 2);
   }
 

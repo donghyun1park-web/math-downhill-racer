@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 250" role="img" aria-labelledby="title desc">
+  <title id="title">first-person MTB cockpit SVG fallback</title>
+  <desc id="desc">Handlebar, gloved hands, brake levers, front suspension fork, partial front tire, and fictional grill turbo device.</desc>
+  <g id="front-tire" class="front-tire">
+    <path d="M205 244c10-55 101-55 111 0" fill="none" stroke="#07111f" stroke-width="28" stroke-linecap="round"/>
+    <path d="M221 244c8-33 71-33 79 0" fill="none" stroke="#dff8ff" stroke-width="7" stroke-linecap="round" opacity=".55"/>
+  </g>
+  <g id="fork" class="front-suspension-fork">
+    <path d="M215 130l-29 105" stroke="#17253a" stroke-width="18" stroke-linecap="round"/>
+    <path d="M305 130l29 105" stroke="#17253a" stroke-width="18" stroke-linecap="round"/>
+    <path d="M223 130l-24 92" stroke="#35d4ff" stroke-width="6" stroke-linecap="round" opacity=".85"/>
+    <path d="M297 130l24 92" stroke="#35d4ff" stroke-width="6" stroke-linecap="round" opacity=".85"/>
+  </g>
+  <g id="handlebar" class="handlebar">
+    <path d="M74 80c58-20 315-20 372 0" fill="none" stroke="#06101e" stroke-width="24" stroke-linecap="round"/>
+    <path d="M87 77c53-16 293-16 346 0" fill="none" stroke="#dff8ff" stroke-width="9" stroke-linecap="round"/>
+    <path d="M205 91h110l-19 45h-72z" fill="#0d2845" stroke="#7ee8ff" stroke-width="4"/>
+  </g>
+  <g id="brake-levers" class="brake-levers">
+    <path d="M128 88c13 31 20 51 28 84" fill="none" stroke="#d9e8f2" stroke-width="6" stroke-linecap="round"/>
+    <path d="M392 88c-13 31-20 51-28 84" fill="none" stroke="#d9e8f2" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <g id="gloved-hands" class="gloved-hands">
+    <path d="M36 63h83c22 0 40 18 40 40v13H70c-24 0-44-20-44-44 0-5 4-9 10-9z" fill="#111827" stroke="#ffffff" stroke-width="4"/>
+    <path d="M401 63h83c6 0 10 4 10 9 0 24-20 44-44 44h-89v-13c0-22 18-40 40-40z" fill="#111827" stroke="#ffffff" stroke-width="4"/>
+    <path d="M58 77h58" stroke="#ff7a18" stroke-width="8" stroke-linecap="round"/>
+    <path d="M404 77h58" stroke="#ff7a18" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <g id="grill-turbo" class="grill-turbo">
+    <rect x="226" y="38" width="68" height="42" rx="12" fill="#ff7a18" stroke="#fff4b8" stroke-width="4"/>
+    <path d="M238 49h44M238 60h44M238 71h44" stroke="#07111f" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="304" cy="58" r="16" fill="#07111f" stroke="#7ee8ff" stroke-width="4"/>
+    <path d="M304 44v28M290 58h28" stroke="#7ee8ff" stroke-width="3"/>
+  </g>
+  <g id="boost-glow" class="boost-glow" opacity=".75">
+    <path d="M217 34c-25-12-42-8-58 8 24 0 42 5 58 17z" fill="#35d4ff"/>
+    <path d="M303 34c25-12 42-8 58 8-24 0-42 5-58 17z" fill="#ff7a18"/>
+  </g>
+</svg>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "math-downhill-racer-v7";
+const CACHE_NAME = "math-downhill-racer-v8";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -11,6 +11,7 @@ const CORE_ASSETS = [
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
   "./assets/icons/maskable-512.png",
+  "./assets/sprites/mtb_cockpit.svg",
   "./assets/sprites/rider.svg",
   "./assets/sprites/rider_boost.svg",
   "./assets/sprites/rider_jump.svg",

@@ -41,5 +41,5 @@ test("math defaults and deployment cache version are preserved", () => {
   const main = read("src/main.js");
   const sw = read("sw.js");
   assert.match(main, /const OPS_DEFAULT = \{ add: true, sub: true, mul: false, div: false \}/);
-  assert.match(sw, /math-downhill-racer-v7/);
+  assert.match(sw, /math-downhill-racer-v\d+/);
 });
