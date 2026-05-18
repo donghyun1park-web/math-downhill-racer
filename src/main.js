@@ -82,6 +82,11 @@ const ASSETS = {
   courseFence: "assets/environment/course_fence.svg",
   mountainLayer: "assets/environment/mountain_layer.svg",
   mtbTrackTape: "assets/environment/mtb_track_tape.svg",
+  mtbTrackTapeLeft: "assets/environment/mtb_track_tape_left.svg",
+  mtbTrackTapeRight: "assets/environment/mtb_track_tape_right.svg",
+  mtbCoursePole: "assets/environment/mtb_course_pole.svg",
+  mtbCourseArrowBlue: "assets/environment/mtb_course_arrow_blue.svg",
+  mtbCourseArrowOrange: "assets/environment/mtb_course_arrow_orange.svg",
   mtbJumpRamp: "assets/environment/mtb_jump_ramp.svg",
   mtbTireTracks: "assets/environment/mtb_tire_tracks.svg",
   mtbBankCurve: "assets/environment/mtb_bank_curve.svg",
@@ -405,6 +410,11 @@ class BootScene extends Phaser.Scene {
     this.load.svg("courseFence", ASSETS.courseFence);
     this.load.svg("mountainLayer", ASSETS.mountainLayer);
     this.load.svg("mtbTrackTape", ASSETS.mtbTrackTape);
+    this.load.svg("mtbTrackTapeLeft", ASSETS.mtbTrackTapeLeft);
+    this.load.svg("mtbTrackTapeRight", ASSETS.mtbTrackTapeRight);
+    this.load.svg("mtbCoursePole", ASSETS.mtbCoursePole);
+    this.load.svg("mtbCourseArrowBlue", ASSETS.mtbCourseArrowBlue);
+    this.load.svg("mtbCourseArrowOrange", ASSETS.mtbCourseArrowOrange);
     this.load.svg("mtbJumpRamp", ASSETS.mtbJumpRamp);
     this.load.svg("mtbTireTracks", ASSETS.mtbTireTracks);
     this.load.svg("mtbBankCurve", ASSETS.mtbBankCurve);
@@ -818,12 +828,14 @@ class RaceScene extends Phaser.Scene {
     this.props = [];
     this.speedLines = [];
     this.courseTape = [];
+    this.coursePoles = [];
+    this.courseArrows = [];
     this.rampProps = [];
     this.sky = this.add.graphics();
     this.mountainBack = this.add.graphics();
     this.track = this.add.graphics();
     this.trackTapeFx = this.add.graphics().setDepth(6);
-    this.trackFx = this.add.graphics();
+    this.trackFx = this.add.graphics().setDepth(5);
     this.riderFx = this.add.graphics().setDepth(16);
     this.feedbackFx = this.add.graphics().setDepth(70);
     this.speedFx = this.add.graphics().setDepth(18);
@@ -864,6 +876,21 @@ class RaceScene extends Phaser.Scene {
       this.courseTape.push(tape);
     }
 
+    for (let i = 0; i < 12; i += 1) {
+      const pole = this.hasTexture("mtbCoursePole") ? this.add.image(0, 0, "mtbCoursePole").setDepth(8) : this.add.graphics().setDepth(8);
+      pole.setData("side", i % 2 === 0 ? -1 : 1);
+      pole.setData("offset", i * 72 + 28);
+      this.coursePoles.push(pole);
+    }
+
+    for (let i = 0; i < 8; i += 1) {
+      const arrow = this.hasTexture("mtbCourseArrowBlue") ? this.add.image(0, 0, "mtbCourseArrowBlue").setDepth(7) : this.add.graphics().setDepth(7);
+      arrow.setData("side", i % 2 === 0 ? -1 : 1);
+      arrow.setData("offset", i * 136 + 82);
+      arrow.setData("variant", i % 2);
+      this.courseArrows.push(arrow);
+    }
+
     for (let i = 0; i < 3; i += 1) {
       const ramp = this.hasTexture("mtbJumpRamp") ? this.add.image(0, 0, "mtbJumpRamp").setDepth(9) : this.add.graphics().setDepth(9);
       ramp.setData("offset", i * 320 + 210);
@@ -887,12 +914,114 @@ class RaceScene extends Phaser.Scene {
     this.props.forEach((item, index) => item.setVisible(!lowEffects || index < 10));
     this.speedLines.forEach((item, index) => item.setVisible(!lowEffects || index < 8));
     this.courseTape.forEach((item, index) => item.setVisible(!lowEffects || index < 4));
+    this.coursePoles.forEach((item, index) => item.setVisible(!lowEffects || index < 6));
+    this.courseArrows.forEach((item, index) => item.setVisible(!lowEffects || index < 4));
     this.rampProps.forEach((item, index) => item.setVisible(!lowEffects || index < 1));
+  }
+
+  getPerspectiveScale(y) {
+    const { height } = this.scale;
+    const horizonY = height * 0.31;
+    const t = Phaser.Math.Clamp((y - horizonY) / (height - horizonY), 0, 1);
+    return Phaser.Math.Linear(0.35, 1.25, t);
+  }
+
+  getTrackCenterAtY(y) {
+    const { width, height } = this.scale;
+    const t = Phaser.Math.Clamp((y - height * 0.31) / (height * 0.69), 0, 1);
+    return width / 2 + Math.sin(t * Math.PI * 1.05) * width * 0.035;
+  }
+
+  getTrackWidthAtY(y) {
+    const { width, height } = this.scale;
+    const topTrackWidth = width * 0.23;
+    const bottomTrackWidth = width * 1.62;
+    const t = Phaser.Math.Clamp((y - height * 0.31) / (height * 0.69), 0, 1);
+    return Phaser.Math.Linear(topTrackWidth, bottomTrackWidth, t);
+  }
+
+  getTrackEdgeX(y, side, padding = 0) {
+    return this.getTrackCenterAtY(y) + side * (this.getTrackWidthAtY(y) / 2 + padding);
+  }
+
+  drawPseudo3DTrack() {
+    const { width, height } = this.scale;
+    const horizonY = height * 0.31;
+    const topY = horizonY + 5;
+    const bottomY = height + 26;
+    const topCenter = this.getTrackCenterAtY(topY);
+    const bottomCenter = this.getTrackCenterAtY(bottomY);
+    const topWidth = this.getTrackWidthAtY(topY);
+    const bottomWidth = this.getTrackWidthAtY(bottomY);
+
+    this.track.clear();
+    this.track.fillStyle(0xe7f5ff, 0.5);
+    this.track.beginPath();
+    this.track.moveTo(topCenter - topWidth * 0.72, topY - 10);
+    this.track.lineTo(topCenter + topWidth * 0.72, topY - 10);
+    this.track.lineTo(bottomCenter + bottomWidth * 0.6, bottomY);
+    this.track.lineTo(bottomCenter - bottomWidth * 0.6, bottomY);
+    this.track.closePath();
+    this.track.fillPath();
+
+    this.track.fillGradientStyle(0x1a3b53, 0x1a3b53, 0x09131e, 0x09131e, 1);
+    this.track.beginPath();
+    this.track.moveTo(topCenter - topWidth * 0.5, topY);
+    this.track.lineTo(topCenter + topWidth * 0.5, topY);
+    this.track.lineTo(bottomCenter + bottomWidth * 0.5, bottomY);
+    this.track.lineTo(bottomCenter - bottomWidth * 0.5, bottomY);
+    this.track.closePath();
+    this.track.fillPath();
+
+    this.track.fillStyle(0xdaf2ff, 0.18);
+    this.track.beginPath();
+    this.track.moveTo(topCenter - topWidth * 0.1, topY + 4);
+    this.track.lineTo(topCenter + topWidth * 0.1, topY + 4);
+    this.track.lineTo(bottomCenter + bottomWidth * 0.18, bottomY);
+    this.track.lineTo(bottomCenter - bottomWidth * 0.18, bottomY);
+    this.track.closePath();
+    this.track.fillPath();
+
+    this.track.lineStyle(2, 0x7ee8ff, 0.25);
+    for (let lane = -2; lane <= 2; lane += 1) {
+      const topX = topCenter + lane * topWidth * 0.12;
+      const bottomX = bottomCenter + lane * bottomWidth * 0.13;
+      this.track.lineBetween(topX, topY + 6, bottomX, bottomY);
+    }
+
+    this.track.lineStyle(7, 0xf6fbff, 0.52);
+    this.track.lineBetween(this.getTrackEdgeX(topY + 48, -1, 8), topY + 48, this.getTrackEdgeX(height * 0.88, -1, 20), height * 0.88);
+    this.track.lineBetween(this.getTrackEdgeX(topY + 48, 1, 8), topY + 48, this.getTrackEdgeX(height * 0.88, 1, 20), height * 0.88);
+    this.track.lineStyle(4, 0xff7a18, 0.62);
+    this.track.lineBetween(this.getTrackEdgeX(topY + 62, -1, 14), topY + 62, this.getTrackEdgeX(height * 0.92, -1, 30), height * 0.92);
+    this.track.lineBetween(this.getTrackEdgeX(topY + 62, 1, 14), topY + 62, this.getTrackEdgeX(height * 0.92, 1, 30), height * 0.92);
+
+    this.trackFx.clear();
+    for (let i = 0; i < 9; i += 1) {
+      const y = Phaser.Math.Linear(topY + 18, height * 0.96, i / 8);
+      const scale = this.getPerspectiveScale(y);
+      const center = this.getTrackCenterAtY(y);
+      const widthAtY = this.getTrackWidthAtY(y);
+      this.trackFx.lineStyle(Math.max(1, scale * 2.2), 0x9ecbe0, 0.18 + scale * 0.08);
+      this.trackFx.lineBetween(center - widthAtY * 0.08, y, center - widthAtY * 0.14, y + 18 * scale);
+      this.trackFx.lineBetween(center + widthAtY * 0.08, y, center + widthAtY * 0.14, y + 18 * scale);
+      if (i % 3 === 1) {
+        this.trackFx.fillStyle(0x8be7ff, 0.16);
+        this.trackFx.fillEllipse(center + widthAtY * 0.22, y + 4, 34 * scale, 10 * scale);
+      }
+    }
+
+    if (this.hasTexture("mtbTireTracks")) {
+      this.tireTrackLeft?.destroy();
+      this.tireTrackRight?.destroy();
+      const trackCenter = this.getTrackCenterAtY(height * 0.66);
+      this.tireTrackLeft = this.add.image(trackCenter - width * 0.12, height * 0.66, "mtbTireTracks").setDisplaySize(width * 0.24, height * 0.52).setDepth(5).setAlpha(0.42);
+      this.tireTrackRight = this.add.image(trackCenter + width * 0.12, height * 0.66, "mtbTireTracks").setDisplaySize(width * 0.24, height * 0.52).setDepth(5).setAlpha(0.42).setFlipX(true);
+    }
   }
 
   drawWorld() {
     const { width, height } = this.scale;
-    const cx = width / 2;
 
     this.sky.clear();
     this.sky.fillGradientStyle(0x06101e, 0x06101e, 0x0d2845, 0x07111f, 1);
@@ -909,44 +1038,7 @@ class RaceScene extends Phaser.Scene {
     this.mountainBack.fillTriangle(width * 0.22, height * 0.2, width * 0.28, height * 0.14, width * 0.37, height * 0.24);
     this.mountainBack.fillTriangle(width * 0.62, height * 0.16, width * 0.7, height * 0.1, width * 0.8, height * 0.22);
 
-    this.track.clear();
-    const horizonY = height * 0.34;
-    this.track.fillStyle(0xe7f5ff, 0.42);
-    this.track.beginPath();
-    this.track.moveTo(cx - 76, horizonY - 8);
-    this.track.lineTo(cx + 76, horizonY - 8);
-    this.track.lineTo(width + 102, height);
-    this.track.lineTo(-102, height);
-    this.track.closePath();
-    this.track.fillPath();
-
-    this.track.fillStyle(0x11263a, 1);
-    this.track.beginPath();
-    this.track.moveTo(cx - 44, horizonY);
-    this.track.lineTo(cx + 44, horizonY);
-    this.track.lineTo(width + 36, height);
-    this.track.lineTo(-36, height);
-    this.track.closePath();
-    this.track.fillPath();
-
-    this.track.lineStyle(2, 0x7ee8ff, 0.22);
-    for (let i = -2; i <= 2; i += 1) {
-      this.track.lineBetween(cx + i * 21, horizonY + 4, cx + i * 96, height);
-    }
-
-    this.track.lineStyle(6, 0xfff4b8, 0.48);
-    this.track.lineBetween(cx - 68, horizonY + 46, -18, height * 0.86);
-    this.track.lineBetween(cx + 68, horizonY + 46, width + 18, height * 0.86);
-    this.track.lineStyle(3, 0xff7a18, 0.56);
-    this.track.lineBetween(cx - 82, horizonY + 60, -36, height * 0.9);
-    this.track.lineBetween(cx + 82, horizonY + 60, width + 36, height * 0.9);
-
-    if (this.hasTexture("mtbTireTracks")) {
-      this.tireTrackLeft?.destroy();
-      this.tireTrackRight?.destroy();
-      this.tireTrackLeft = this.add.image(cx - 44, height * 0.65, "mtbTireTracks").setDisplaySize(82, height * 0.48).setDepth(5).setAlpha(0.44);
-      this.tireTrackRight = this.add.image(cx + 44, height * 0.65, "mtbTireTracks").setDisplaySize(82, height * 0.48).setDepth(5).setAlpha(0.44).setFlipX(true);
-    }
+    this.drawPseudo3DTrack();
   }
 
   createRider() {
@@ -1484,6 +1576,12 @@ class RaceScene extends Phaser.Scene {
     return this.scale.width / 2 + (lane - 1) * Math.min(DESIGN.laneWidth, this.scale.width * 0.24);
   }
 
+  gateLaneToX(lane, y) {
+    const laneOffset = lane - 1;
+    const perspectiveLaneWidth = Math.min(this.scale.width * 0.24, this.getTrackWidthAtY(y) * 0.22);
+    return this.getTrackCenterAtY(y) + laneOffset * perspectiveLaneWidth;
+  }
+
   createGatePair(initial = false) {
     state.learningStats = loadLearningStats();
     const problem = state.mode === "tutorial"
@@ -1499,7 +1597,8 @@ class RaceScene extends Phaser.Scene {
     for (let lane = 0; lane < 3; lane += 1) {
       const isAnswerLane = lane === 0 || lane === 2;
       const value = isAnswerLane ? problem.choices[lane === 0 ? 0 : 1] : "BOOST";
-      const gate = this.add.container(this.laneToX(lane), initial ? this.scale.height * 0.38 : -90).setDepth(12);
+      const gateY = initial ? this.scale.height * 0.38 : -90;
+      const gate = this.add.container(this.gateLaneToX(lane, gateY), gateY).setDepth(12);
       gate.setData("lane", lane);
       gate.setData("value", value);
       gate.setData("isBoost", value === "BOOST");
@@ -1576,13 +1675,17 @@ class RaceScene extends Phaser.Scene {
 
   updateTerrain(time, delta, speedFactor) {
     const { width, height } = this.scale;
+    const horizonY = height * 0.31;
     this.trackLines.forEach((line, index) => {
-      const phase = (time * 0.19 * speedFactor + index * 58) % (height * 0.68);
-      const y = height * 0.34 + phase;
-      const depth = Phaser.Math.Clamp((y - height * 0.34) / (height * 0.66), 0, 1);
-      line.setPosition(width / 2 + Math.sin(index * 1.7) * depth * 90, y);
-      line.setScale(0.2 + depth * 2.65, 1);
-      line.setAlpha(0.08 + depth * 0.36 + state.boost / 360);
+      const phase = (time * 0.2 * speedFactor + index * 58) % (height * 0.69);
+      const y = horizonY + phase;
+      const scale = this.getPerspectiveScale(y);
+      const trackWidth = this.getTrackWidthAtY(y);
+      const center = this.getTrackCenterAtY(y);
+      line.setPosition(center + Math.sin(index * 1.7) * trackWidth * 0.08, y);
+      line.setScale(scale * 1.7, 1);
+      line.setAlpha(0.07 + scale * 0.22 + state.boost / 360);
+      line.setDepth(Math.floor(y * 0.02) + 4);
     });
 
     this.snow.forEach((flake, index) => {
@@ -1600,33 +1703,87 @@ class RaceScene extends Phaser.Scene {
       if (!prop.visible) return;
       const side = prop.getData("side");
       const phase = (time * 0.16 * speedFactor + prop.getData("offset")) % (height * 0.77);
-      const y = height * 0.31 + phase;
-      const depth = Phaser.Math.Clamp((y - height * 0.31) / (height * 0.69), 0, 1);
-      const x = width / 2 + side * (48 + depth * width * 0.72);
-      this.drawCourseProp(prop, x, y, depth, side, index);
+      const y = horizonY + phase;
+      const scale = this.getPerspectiveScale(y);
+      const x = this.getTrackEdgeX(y, side, 34 * scale + width * 0.07);
+      this.drawCourseProp(prop, x, y, scale, side, index);
     });
 
     this.courseTape.forEach((tape, index) => {
       if (!tape.visible) return;
       const side = tape.getData("side");
-      const phase = (time * 0.18 * speedFactor + tape.getData("offset")) % (height * 0.76);
-      const y = height * 0.33 + phase;
-      const depth = Phaser.Math.Clamp((y - height * 0.33) / (height * 0.67), 0, 1);
-      const x = width / 2 + side * (60 + depth * width * 0.57);
-      if (tape.setTexture && this.hasTexture("mtbTrackTape")) {
-        tape.setTexture("mtbTrackTape");
+      const phase = (time * 0.21 * speedFactor + tape.getData("offset")) % (height * 0.74);
+      const y = horizonY + phase;
+      const scale = this.getPerspectiveScale(y);
+      const x = this.getTrackEdgeX(y, side, 18 * scale);
+      const key = side < 0 && this.hasTexture("mtbTrackTapeLeft")
+        ? "mtbTrackTapeLeft"
+        : side > 0 && this.hasTexture("mtbTrackTapeRight")
+          ? "mtbTrackTapeRight"
+          : "mtbTrackTape";
+      if (tape.setTexture && this.hasTexture(key)) {
+        tape.setTexture(key);
         tape.setPosition(x, y);
-        tape.setScale(0.18 + depth * 0.82);
-        tape.setAlpha(0.6 + depth * 0.34);
-        tape.setAngle(side * (8 + depth * 6));
-        tape.setFlipX(side < 0);
+        tape.setScale(0.26 * scale);
+        tape.setAlpha(0.48 + scale * 0.32);
+        tape.setAngle(side * (7 + scale * 5));
+        tape.setDepth(Math.floor(y * 0.02) + 8);
       } else {
         tape.clear();
         tape.setPosition(x, y);
-        tape.lineStyle(4, 0xf6fbff, 0.74);
-        tape.lineBetween(side * -62, 0, side * 52, 18);
-        tape.lineStyle(3, index % 2 ? 0xff7a18 : 0x35d4ff, 0.82);
-        tape.lineBetween(side * -62, -8, side * 52, 10);
+        tape.setDepth(Math.floor(y * 0.02) + 8);
+        tape.lineStyle(4 * scale, 0xf6fbff, 0.74);
+        tape.lineBetween(side * -62 * scale, 0, side * 52 * scale, 18 * scale);
+        tape.lineStyle(3 * scale, index % 2 ? 0xff7a18 : 0x35d4ff, 0.82);
+        tape.lineBetween(side * -62 * scale, -8 * scale, side * 52 * scale, 10 * scale);
+      }
+    });
+
+    this.coursePoles.forEach((pole, index) => {
+      if (!pole.visible) return;
+      const side = pole.getData("side");
+      const phase = (time * 0.23 * speedFactor + pole.getData("offset")) % (height * 0.74);
+      const y = horizonY + phase;
+      const scale = this.getPerspectiveScale(y);
+      const x = this.getTrackEdgeX(y, side, 7 * scale);
+      if (pole.setTexture && this.hasTexture("mtbCoursePole")) {
+        pole.setTexture("mtbCoursePole");
+        pole.setPosition(x, y);
+        pole.setScale(0.24 * scale);
+        pole.setAlpha(0.55 + scale * 0.32);
+        pole.setDepth(Math.floor(y * 0.02) + 9);
+      } else {
+        pole.clear();
+        pole.setPosition(x, y);
+        pole.setDepth(Math.floor(y * 0.02) + 9);
+        pole.lineStyle(4 * scale, 0xf8fbff, 0.9);
+        pole.lineBetween(0, -32 * scale, 0, 28 * scale);
+        pole.fillStyle(index % 2 ? 0xff7a18 : 0x35d4ff, 0.9);
+        pole.fillTriangle(0, -30 * scale, side * 28 * scale, -20 * scale, 0, -10 * scale);
+      }
+    });
+
+    this.courseArrows.forEach((arrow, index) => {
+      if (!arrow.visible) return;
+      const side = arrow.getData("side");
+      const phase = (time * 0.18 * speedFactor + arrow.getData("offset")) % (height * 0.82);
+      const y = horizonY + phase;
+      const scale = this.getPerspectiveScale(y);
+      const x = this.getTrackCenterAtY(y) + side * this.getTrackWidthAtY(y) * 0.28;
+      const key = arrow.getData("variant") ? "mtbCourseArrowOrange" : "mtbCourseArrowBlue";
+      if (arrow.setTexture && this.hasTexture(key)) {
+        arrow.setTexture(key);
+        arrow.setPosition(x, y);
+        arrow.setScale(0.18 * scale);
+        arrow.setAngle(side * 4);
+        arrow.setAlpha(0.42 + scale * 0.35);
+        arrow.setDepth(Math.floor(y * 0.02) + 7);
+      } else {
+        arrow.clear();
+        arrow.setPosition(x, y);
+        arrow.setDepth(Math.floor(y * 0.02) + 7);
+        arrow.fillStyle(index % 2 ? 0xff7a18 : 0x35d4ff, 0.72);
+        arrow.fillTriangle(-22 * scale, -10 * scale, 22 * scale, 0, -22 * scale, 10 * scale);
       }
     });
 
@@ -1634,19 +1791,21 @@ class RaceScene extends Phaser.Scene {
       if (!ramp.visible) return;
       const phase = (time * 0.115 * speedFactor + ramp.getData("offset")) % (height * 1.22);
       const y = height * 0.28 + phase;
-      const depth = Phaser.Math.Clamp((y - height * 0.28) / (height * 0.72), 0, 1);
-      const x = width / 2 + Math.sin(index * 1.9 + time * 0.0008) * 34 * depth;
+      const scale = this.getPerspectiveScale(y);
+      const x = this.getTrackCenterAtY(y) + Math.sin(index * 1.9 + time * 0.0008) * 26 * scale;
       if (ramp.setTexture && this.hasTexture("mtbJumpRamp")) {
         ramp.setTexture("mtbJumpRamp");
         ramp.setPosition(x, y);
-        ramp.setScale(0.18 + depth * 0.7);
+        ramp.setScale(0.24 * scale);
         ramp.setAlpha(y > height * 0.44 && y < height * 0.8 ? 0.76 : 0);
+        ramp.setDepth(Math.floor(y * 0.02) + 10);
       }
     });
   }
 
   drawCourseProp(prop, x, y, depth, side, index) {
     prop.setPosition(x, y);
+    prop.setDepth(Math.floor(y * 0.02) + 7);
     const kind = prop.getData("kind");
     if (prop.setTexture && this.hasTexture("pineTree")) {
       const keys = ["pineTree", "courseFlag", "snowBank", "rock", "courseArrow", "courseFence", "mtbCourseMarker", "mtbBankCurve", "pineTree", "courseArrow"];
@@ -1684,8 +1843,10 @@ class RaceScene extends Phaser.Scene {
     for (let i = this.gates.length - 1; i >= 0; i -= 1) {
       const gate = this.gates[i];
       gate.y += delta * 0.285 * speedFactor;
-      const depth = Phaser.Math.Clamp(gate.y / this.scale.height, 0.18, 0.98);
-      gate.setScale(depth);
+      gate.x = this.gateLaneToX(gate.getData("lane"), gate.y);
+      const depth = this.getPerspectiveScale(gate.y);
+      gate.setScale(Phaser.Math.Clamp(depth * 0.78, 0.28, 1.04));
+      gate.setDepth(Math.floor(gate.y * 0.02) + 11);
 
       if (this.isGateInCatchWindow(gate)) {
         this.resolveGate(gate);

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 180" role="img" aria-labelledby="title">
+  <title id="title">MTB downhill course pole</title>
+  <g id="mtb-course-pole">
+    <path d="M40 164V18" stroke="#07111f" stroke-width="16" stroke-linecap="round"/>
+    <path d="M40 164V18" stroke="#f6fbff" stroke-width="9" stroke-linecap="round"/>
+    <path d="M40 42h27M40 78h24M40 114h20" stroke="#ff7a18" stroke-width="8" stroke-linecap="round"/>
+    <path d="M40 60H16M40 96H14M40 132H18" stroke="#35d4ff" stroke-width="8" stroke-linecap="round"/>
+  </g>
+</svg>

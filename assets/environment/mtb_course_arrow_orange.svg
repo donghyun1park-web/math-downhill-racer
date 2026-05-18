@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 100" role="img" aria-labelledby="title">
+  <title id="title">Orange MTB course direction arrow</title>
+  <g id="mtb-course-arrow-orange">
+    <path d="M18 50h92" stroke="#07111f" stroke-width="28" stroke-linecap="round"/>
+    <path d="M92 18l62 32-62 32z" fill="#07111f"/>
+    <path d="M18 50h92" stroke="#ff7a18" stroke-width="18" stroke-linecap="round"/>
+    <path d="M96 28l42 22-42 22z" fill="#ff7a18"/>
+    <path d="M32 50h50" stroke="#fff4b8" stroke-width="4" opacity=".75"/>
+  </g>
+</svg>

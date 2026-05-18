@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 90" role="img" aria-labelledby="title">
+  <title id="title">Right side MTB course tape with snow pole markers</title>
+  <g id="mtb-track-tape-right" fill="none" stroke-linecap="round">
+    <path d="M242 57C178 22 95 76 16 32" stroke="#f6fbff" stroke-width="10"/>
+    <path d="M242 57C178 22 95 76 16 32" stroke="#ff7a18" stroke-width="4" stroke-dasharray="22 16"/>
+    <path d="M226 48v34M157 51v32M79 49v34M30 35v34" stroke="#07111f" stroke-width="7"/>
+    <path d="M226 48v34M157 51v32M79 49v34M30 35v34" stroke="#35d4ff" stroke-width="4"/>
+  </g>
+</svg>
