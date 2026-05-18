@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07111f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Math Downhill" />
+    <title>Math Downhill Racer</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./src/game.css" />
+    <script src="./vendor/phaser.min.js"></script>
+  </head>
+  <body>
+    <main id="app-shell">
+      <div id="game-root" aria-label="Math Downhill Racer game canvas"></div>
+      <section id="settings-panel" class="settings-panel" aria-label="Game settings">
+        <div class="settings-header">
+          <strong>Math Setup</strong>
+          <button id="close-settings" type="button" aria-label="Close settings">Close</button>
+        </div>
+        <label><input id="op-add" type="checkbox" checked /> Addition</label>
+        <label><input id="op-sub" type="checkbox" checked /> Subtraction</label>
+        <label><input id="op-mul" type="checkbox" /> Multiplication</label>
+        <label><input id="op-div" type="checkbox" /> Division</label>
+        <label><input id="feedback-sound" type="checkbox" checked /> Sound Effects</label>
+        <label><input id="feedback-haptic" type="checkbox" checked /> Haptic Feedback</label>
+        <label><input id="low-effects" type="checkbox" /> Low Effects Mode</label>
+        <p>Default: Addition/Subtraction ON, Multiplication/Division OFF.</p>
+        <div class="settings-actions">
+          <button id="test-sound" type="button">Test Sound</button>
+          <button id="test-haptic" type="button">Test Haptic</button>
+        </div>
+        <button id="reset-learning" type="button">Reset learning data</button>
+      </section>
+    </main>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
