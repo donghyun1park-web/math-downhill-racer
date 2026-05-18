@@ -49,6 +49,13 @@ const ASSETS = {
   riderBoost: "assets/sprites/rider_boost.svg",
   riderJump: "assets/sprites/rider_jump.svg",
   riderMtb: "assets/sprites/rider_mtb_large.svg",
+  riderMtbLarge: "assets/sprites/rider_mtb_large.svg",
+  riderMtbLeanLeft: "assets/sprites/rider_mtb_lean_left.svg",
+  riderMtbLeanRight: "assets/sprites/rider_mtb_lean_right.svg",
+  riderMtbBoostState: "assets/sprites/rider_mtb_boost.svg",
+  riderMtbJumpState: "assets/sprites/rider_mtb_jump.svg",
+  riderMtbLand: "assets/sprites/rider_mtb_land.svg",
+  riderMtbSlide: "assets/sprites/rider_mtb_slide.svg",
   riderMtbBoost: "assets/sprites/rider_mtb_boost_large.svg",
   riderMtbJump: "assets/sprites/rider_mtb_jump_large.svg",
   bikeShadow: "assets/sprites/bike_shadow.svg",
@@ -109,7 +116,9 @@ const state = {
   hudPulse: 0,
   warningPulse: 0,
   flashPulse: 0,
-  boostPulse: 0
+  boostPulse: 0,
+  riderLandPulse: 0,
+  riderSlidePulse: 0
 };
 
 const settingsPanel = document.querySelector("#settings-panel");
@@ -273,6 +282,8 @@ function resetRun(stage) {
   state.warningPulse = 0;
   state.flashPulse = 0;
   state.boostPulse = 0;
+  state.riderLandPulse = 0;
+  state.riderSlidePulse = 0;
 }
 
 function resetTutorialRun() {
@@ -361,6 +372,13 @@ class BootScene extends Phaser.Scene {
     this.load.svg("riderBoost", ASSETS.riderBoost);
     this.load.svg("riderJump", ASSETS.riderJump);
     this.load.svg("riderMtb", ASSETS.riderMtb);
+    this.load.svg("riderMtbLarge", ASSETS.riderMtbLarge);
+    this.load.svg("riderMtbLeanLeft", ASSETS.riderMtbLeanLeft);
+    this.load.svg("riderMtbLeanRight", ASSETS.riderMtbLeanRight);
+    this.load.svg("riderMtbBoostState", ASSETS.riderMtbBoostState);
+    this.load.svg("riderMtbJumpState", ASSETS.riderMtbJumpState);
+    this.load.svg("riderMtbLand", ASSETS.riderMtbLand);
+    this.load.svg("riderMtbSlide", ASSETS.riderMtbSlide);
     this.load.svg("riderMtbBoost", ASSETS.riderMtbBoost);
     this.load.svg("riderMtbJump", ASSETS.riderMtbJump);
     this.load.svg("bikeShadow", ASSETS.bikeShadow);
@@ -938,7 +956,7 @@ class RaceScene extends Phaser.Scene {
     this.shadow = this.hasTexture("bikeShadow")
       ? this.add.image(0, 74, "bikeShadow").setDisplaySize(178, 38).setAlpha(0.78)
       : this.add.ellipse(0, 74, 166, 28, 0x000000, 0.34);
-    const riderTexture = this.hasTexture("riderMtb") ? "riderMtb" : "rider";
+    const riderTexture = this.hasTexture("riderMtbLarge") ? "riderMtbLarge" : this.hasTexture("riderMtb") ? "riderMtb" : "rider";
     this.riderSprite = this.hasTexture(riderTexture) ? this.add.image(0, 0, riderTexture).setDisplaySize(232, 168) : null;
     this.bike = this.riderSprite ? null : this.add.graphics();
     this.body = this.riderSprite ? null : this.add.graphics();
@@ -948,14 +966,11 @@ class RaceScene extends Phaser.Scene {
 
   drawRider(lean) {
     if (this.riderSprite) {
-      const key = state.jumping
-        ? (this.hasTexture("riderMtbJump") ? "riderMtbJump" : "riderJump")
-        : state.boost > 8 || state.boostPulse > 0
-          ? (this.hasTexture("riderMtbBoost") ? "riderMtbBoost" : "riderBoost")
-          : (this.hasTexture("riderMtb") ? "riderMtb" : "rider");
+      const key = this.getRiderTextureKey(lean);
       if (this.hasTexture(key) && this.riderSprite.texture.key !== key) this.riderSprite.setTexture(key);
-      this.riderSprite.setDisplaySize(state.jumping ? 238 : state.boost > 8 || state.boostPulse > 0 ? 254 : 232, state.jumping ? 174 : 168);
-      this.riderSprite.setAngle(lean * 5);
+      const size = this.getRiderDisplaySize(key);
+      this.riderSprite.setDisplaySize(size.width, size.height);
+      this.riderSprite.setAngle(key === "riderMtbLeanLeft" || key === "riderMtbLeanRight" ? 0 : lean * 4);
       return;
     }
     this.bike.clear();
@@ -987,6 +1002,29 @@ class RaceScene extends Phaser.Scene {
     this.body.lineBetween(16 + leanOffset, -2, 42 + leanOffset, 20);
     this.body.lineBetween(-8 + leanOffset, 2, -22 + leanOffset, 36);
     this.body.lineBetween(12 + leanOffset, 2, 24 + leanOffset, 36);
+  }
+
+  getRiderTextureKey(lean) {
+    if (state.jumping) return this.firstTextureKey(["riderMtbJumpState", "riderMtbJump", "riderJump"]);
+    if (state.riderLandPulse > 0) return this.firstTextureKey(["riderMtbLand", "riderMtbLarge", "riderMtb", "rider"]);
+    if (state.riderSlidePulse > 0 || state.warningPulse > 0.45) return this.firstTextureKey(["riderMtbSlide", "riderMtbLarge", "riderMtb", "rider"]);
+    if (state.boost > 8 || state.boostPulse > 0) return this.firstTextureKey(["riderMtbBoostState", "riderMtbBoost", "riderBoost"]);
+    if (lean < -0.25) return this.firstTextureKey(["riderMtbLeanLeft", "riderMtbLarge", "riderMtb", "rider"]);
+    if (lean > 0.25) return this.firstTextureKey(["riderMtbLeanRight", "riderMtbLarge", "riderMtb", "rider"]);
+    return this.firstTextureKey(["riderMtbLarge", "riderMtb", "rider"]);
+  }
+
+  firstTextureKey(keys) {
+    return keys.find((key) => this.hasTexture(key)) || "rider";
+  }
+
+  getRiderDisplaySize(key) {
+    if (key === "riderMtbBoostState" || key === "riderMtbBoost") return { width: 258, height: 170 };
+    if (key === "riderMtbJumpState" || key === "riderMtbJump") return { width: 244, height: 178 };
+    if (key === "riderMtbLand") return { width: 238, height: 162 };
+    if (key === "riderMtbSlide") return { width: 248, height: 170 };
+    if (key === "riderMtbLeanLeft" || key === "riderMtbLeanRight") return { width: 238, height: 170 };
+    return { width: 232, height: 168 };
   }
 
   createHud() {
@@ -1506,7 +1544,10 @@ class RaceScene extends Phaser.Scene {
     state.warningPulse = Math.max(0, state.warningPulse - dt * 2.2);
     state.flashPulse = Math.max(0, state.flashPulse - dt * 3.6);
     state.boostPulse = Math.max(0, state.boostPulse - dt * 1.4);
+    state.riderLandPulse = Math.max(0, state.riderLandPulse - dt * 5.4);
+    state.riderSlidePulse = Math.max(0, state.riderSlidePulse - dt * 3.2);
     if (state.hudPulse <= 0 && state.boostPulse <= 0) state.hudMode = "normal";
+    this.drawRider(this.lane - 1);
 
     const speedFactor = state.mode === "tutorial" ? 0.74 + state.boost / 120 : 1 + state.boost / 82 + state.speedKick / 110 + (state.stage.id - 1) * 0.035;
     const targetSpeed = state.mode === "tutorial" ? 48 + state.boost * 0.45 : state.stage.baseSpeed + 22 + state.combo * 5 + state.boost * 0.92 + state.speedKick;
@@ -1740,7 +1781,9 @@ class RaceScene extends Phaser.Scene {
     state.hudMode = "cold";
     state.hudPulse = 0.7;
     state.warningPulse = 1;
+    state.riderSlidePulse = 1;
     feedback.trigger("wrong");
+    this.drawRider(this.lane - 1);
     this.flashText(state.wrongStreak >= 3 ? "CAREFUL!" : "MISS!", 0xff6b81);
     this.cameras.main.shake(170, state.performance.lowEffectsMode ? 0.006 : 0.012);
   }
@@ -1821,12 +1864,20 @@ class RaceScene extends Phaser.Scene {
   landJump() {
     state.jumping = false;
     state.airBonusReady = false;
+    state.riderLandPulse = 1;
     this.jumpLocked = false;
-    this.shadow.setScale(1, 1);
+    this.shadow.setScale(1.18, 1.08);
     this.shadow.setAlpha(this.shadow.texture ? 0.78 : 0.34);
     this.drawRider(this.lane - 1);
     feedback.trigger("land");
     this.cameras.main.shake(115, state.performance.lowEffectsMode ? 0.003 : 0.006);
+    this.tweens.add({
+      targets: this.shadow,
+      scaleX: 1,
+      scaleY: 1,
+      duration: 180,
+      ease: "Quad.easeOut"
+    });
     const ring = this.add.circle(this.rider.x, this.rider.y + 72, 10, 0xffffff, 0).setStrokeStyle(4, 0xdff8ff, 0.8).setDepth(19);
     this.tweens.add({
       targets: ring,
@@ -2091,7 +2142,9 @@ function drawMtbTitleHero(scene, x, y) {
     scene.add.image(x - 128, y + 116, "mtbTrackTape").setDisplaySize(178, 62).setAngle(-15).setAlpha(0.9);
     scene.add.image(x + 128, y + 112, "mtbTrackTape").setDisplaySize(178, 62).setAngle(15).setFlipX(true).setAlpha(0.9);
   }
-  if (scene.textures.exists("riderMtbBoost")) {
+  if (scene.textures.exists("riderMtbBoostState")) {
+    scene.add.image(x + 44, y + 54, "riderMtbBoostState").setDisplaySize(292, 188).setAngle(-6);
+  } else if (scene.textures.exists("riderMtbBoost")) {
     scene.add.image(x + 44, y + 54, "riderMtbBoost").setDisplaySize(292, 188).setAngle(-6);
   } else {
     drawRiderSilhouette(scene, x - 24, y - 14);

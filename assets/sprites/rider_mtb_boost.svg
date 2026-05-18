@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 270" role="img" aria-labelledby="title">
+  <title id="title">Boosting downhill MTB rider with helmet goggles wheels handlebar frame grill turbo and boost flame</title>
+  <path id="boost-flame" d="M48 86C7 63 2 38 2 38c48 10 86 21 122 42-36 1-55 4-76 6z" fill="#35d4ff" opacity=".9"/>
+  <path d="M76 113C34 111 15 94 15 94c45-5 80 0 115 14-23 7-35 8-54 5z" fill="#ff7a18" opacity=".85"/>
+  <g id="bike" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse id="rear-wheel" cx="132" cy="202" rx="52" ry="43" fill="none" stroke="#07111f" stroke-width="18"/>
+    <ellipse id="front-wheel" cx="316" cy="199" rx="60" ry="47" fill="none" stroke="#07111f" stroke-width="18"/>
+    <path id="frame" d="M132 202l75-90 74 86H132l48-8 27-78 20 86" fill="none" stroke="#f6fbff" stroke-width="11"/>
+    <path id="fork" d="M280 199l36-101M303 200l38-99" fill="none" stroke="#35d4ff" stroke-width="10"/>
+    <path id="handlebar" d="M337 96l35-18M335 96l-40 2" fill="none" stroke="#f6fbff" stroke-width="9"/>
+  </g>
+  <g id="rider-body">
+    <path id="knee-pad" d="M195 130l-60 72M221 132l70 65" fill="none" stroke="#f6fbff" stroke-width="18" stroke-linecap="round"/>
+    <path d="M166 82c38-22 92-15 116 10l-34 50c-36-4-71-15-99-42z" fill="#0b1d31" stroke="#dff8ff" stroke-width="4"/>
+    <path d="M171 85l84 48" stroke="#ff7a18" stroke-width="15"/>
+    <path d="M248 98l88-5M180 98l-55 52" fill="none" stroke="#f6fbff" stroke-width="15" stroke-linecap="round"/>
+    <g id="helmet">
+      <path d="M145 54c27-31 82-25 97 8 2 17-13 35-39 36l-48-7c-17-8-20-23-10-37z" fill="#f6fbff" stroke="#07111f" stroke-width="6"/>
+      <path id="goggles" d="M158 65l62 8-10 17-58-7z" fill="#07111f"/>
+    </g>
+    <g id="grill-turbo">
+      <rect x="251" y="58" width="54" height="43" rx="8" fill="#ff7a18" stroke="#07111f" stroke-width="5"/>
+      <circle cx="278" cy="80" r="17" fill="#07111f" stroke="#ffcf54" stroke-width="5"/>
+    </g>
+  </g>
+</svg>

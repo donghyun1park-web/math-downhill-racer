@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260" role="img" aria-labelledby="title">
+  <title id="title">Downhill MTB rider leaning left with helmet goggles wheels handlebar frame and grill turbo</title>
+  <g id="rider-state-lean-left" transform="rotate(-9 180 150)">
+    <g id="bike" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse id="rear-wheel" cx="88" cy="196" rx="50" ry="42" fill="none" stroke="#07111f" stroke-width="18"/>
+      <ellipse id="front-wheel" cx="270" cy="189" rx="58" ry="47" fill="none" stroke="#07111f" stroke-width="18"/>
+      <path id="frame" d="M88 196l72-84 76 78H88l47-10 25-68 22 78" fill="none" stroke="#f6fbff" stroke-width="11"/>
+      <path id="fork" d="M235 189l33-98M258 190l35-96" fill="none" stroke="#35d4ff" stroke-width="10"/>
+      <path id="handlebar" d="M289 93l29-25M287 93l-42 0" fill="none" stroke="#f6fbff" stroke-width="9"/>
+    </g>
+    <g id="rider-body">
+      <path id="knee-pad" d="M151 133l-46 58M178 136l54 52" fill="none" stroke="#f6fbff" stroke-width="18" stroke-linecap="round"/>
+      <path d="M126 86c32-25 82-19 108 13l-27 48c-30-7-58-17-92-43z" fill="#10243a" stroke="#dff8ff" stroke-width="4"/>
+      <path d="M136 91l79 48" stroke="#ff7a18" stroke-width="14"/>
+      <path d="M203 103l76-12M141 105l-43 45" fill="none" stroke="#f6fbff" stroke-width="15" stroke-linecap="round"/>
+      <g id="helmet">
+        <path d="M107 57c25-31 77-24 92 9 3 18-10 35-35 36l-48-8c-16-8-18-24-9-37z" fill="#f6fbff" stroke="#07111f" stroke-width="6"/>
+        <path id="goggles" d="M119 68l61 9-9 17-57-8z" fill="#07111f"/>
+      </g>
+      <g id="grill-turbo">
+        <rect x="207" y="64" width="50" height="42" rx="8" fill="#ff7a18" stroke="#07111f" stroke-width="5"/>
+        <circle cx="232" cy="85" r="16" fill="#07111f" stroke="#ffcf54" stroke-width="5"/>
+      </g>
+    </g>
+  </g>
+</svg>

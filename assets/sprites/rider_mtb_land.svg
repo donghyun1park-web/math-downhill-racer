@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 245" role="img" aria-labelledby="title">
+  <title id="title">Landing downhill MTB rider with compressed suspension helmet handlebar frame wheels and grill turbo</title>
+  <g id="bike" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse id="rear-wheel" cx="88" cy="184" rx="53" ry="37" fill="none" stroke="#07111f" stroke-width="19"/>
+    <ellipse id="front-wheel" cx="270" cy="184" rx="59" ry="39" fill="none" stroke="#07111f" stroke-width="19"/>
+    <path id="frame" d="M88 184l72-62 76 62H88l48-5 24-57 22 62" fill="none" stroke="#f6fbff" stroke-width="12"/>
+    <path id="fork" d="M238 184l28-78M262 184l30-78" fill="none" stroke="#35d4ff" stroke-width="11"/>
+    <path id="handlebar" d="M289 106l32-10M286 106l-39 3" fill="none" stroke="#f6fbff" stroke-width="9"/>
+  </g>
+  <g id="rider-body">
+    <path id="knee-pad" d="M150 124l-45 59M178 128l55 54" fill="none" stroke="#f6fbff" stroke-width="19" stroke-linecap="round"/>
+    <path d="M124 78c36-18 82-12 108 8l-29 45c-34-3-64-12-92-36z" fill="#10243a" stroke="#dff8ff" stroke-width="4"/>
+    <path d="M134 82l78 41" stroke="#ff7a18" stroke-width="14"/>
+    <path d="M202 92l78 7M140 94l-44 43" fill="none" stroke="#f6fbff" stroke-width="15" stroke-linecap="round"/>
+    <g id="helmet">
+      <path d="M105 47c27-28 78-22 93 8 2 17-12 31-37 32l-47-7c-17-7-20-21-9-33z" fill="#f6fbff" stroke="#07111f" stroke-width="6"/>
+      <path id="goggles" d="M118 58l61 7-10 16-56-7z" fill="#07111f"/>
+    </g>
+    <g id="grill-turbo">
+      <rect x="207" y="56" width="50" height="40" rx="8" fill="#ff7a18" stroke="#07111f" stroke-width="5"/>
+      <circle cx="232" cy="76" r="15" fill="#07111f" stroke="#ffcf54" stroke-width="5"/>
+    </g>
+  </g>
+</svg>
