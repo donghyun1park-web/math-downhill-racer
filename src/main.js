@@ -38,6 +38,12 @@ const JUMP_ZONE_SIZE = 88;
 const SAFE_BOTTOM_FALLBACK = 16;
 const TOUCH_REPEAT_MS = 230;
 const TOUCH_TOP_DEAD_ZONE = 172;
+const UI_SAFE_ZONES = {
+  problemBanner: { topRatio: 0.055, bottomRatio: 0.16 },
+  hud: { topFromBottom: 124 },
+  jumpButton: { right: 126, bottom: 160 },
+  riderFocus: { topRatio: 0.68, bottomRatio: 0.9 }
+};
 const DEBUG_TOUCH_ENABLED = new URLSearchParams(location.search).get("debugTouch") === "1"
   || localStorage.getItem("math-downhill-debug-touch") === "1";
 const DEBUG_PERF_ENABLED = new URLSearchParams(location.search).get("debugPerf") === "1"
@@ -1385,7 +1391,65 @@ class RaceScene extends Phaser.Scene {
       backgroundColor: "rgba(2,8,21,0.5)",
       padding: { x: 8, y: 5 }
     }).setOrigin(1, 0).setDepth(82);
+    this.createCompactHud();
     this.drawHud();
+  }
+
+  createCompactHud() {
+    this.speedText.setFontSize(34);
+    this.speedUnit.setFontSize(11);
+    this.statusText.setFontSize(10);
+    this.comboText.setFontSize(11);
+    this.tempText.setFontSize(10);
+    this.clusterText.setFontSize(10);
+    this.scoreText.setFontSize(22);
+    this.questionText.setFontSize(state.mode === "tutorial" ? 23 : 21);
+    this.questionText.setWordWrapWidth(this.scale.width - 72);
+    this.problemPanel?.setAlpha(0.76);
+    this.hudPanel?.setAlpha(0.62);
+    this.hudVisualStates = {
+      normal: 0x35d4ff,
+      correct: 0x42ff9b,
+      wrong: 0xff375f,
+      boost: 0xff7a18,
+      cold: 0x9ee7ff,
+      overheat: 0xff375f,
+      stageClear: 0xffcf54
+    };
+  }
+
+  updateCompactHud() {
+    const { width, height } = this.scale;
+    const layout = this.getProblemBannerLayout();
+    const bottomSafe = this.getSafeBottom();
+    const hudTop = height - 112 - bottomSafe;
+    this.questionText.setFontSize(state.mode === "tutorial" ? 23 : 21);
+    this.questionText.setWordWrapWidth(width - 72);
+    this.questionText.setPosition(width / 2, layout.y - layout.height * 0.32);
+    this.problemPanel?.setPosition(width / 2, layout.y).setDisplaySize(layout.width, layout.height);
+    this.hudPanel?.setPosition(width * 0.5, height - 72 - bottomSafe).setDisplaySize(Math.min(width - 108, 280), 80);
+    this.speedText.setPosition(width * 0.5, hudTop + 26);
+    this.speedUnit.setPosition(width * 0.5, hudTop + 52);
+    this.statusText.setPosition(width * 0.5, hudTop + 72);
+    this.comboText.setPosition(22, 38);
+    this.tempText.setPosition(width - 22, hudTop + 8);
+    this.clusterText.setPosition(width - 28, hudTop + 28);
+    this.scoreText.setX(width - 22);
+    this.settingsButton.setPosition(22, height - 42 - bottomSafe);
+  }
+
+  setHudVisualState(nextState) {
+    if (this.hudVisualStates?.[nextState]) state.hudMode = nextState;
+  }
+
+  getProblemBannerLayout() {
+    const { width, height } = this.scale;
+    return {
+      x: width / 2,
+      y: Math.max(58, height * 0.088),
+      width: Math.min(width - 56, 334),
+      height: Math.min(height * 0.095, 72)
+    };
   }
 
   createTutorialHud() {
@@ -1406,76 +1470,73 @@ class RaceScene extends Phaser.Scene {
     const hudColor = this.getHudColor();
     const tempColor = this.getTempColor();
     const rpmValue = Phaser.Math.Clamp((state.speed - 50) / 160, 0, 1);
+    const bottomSafe = this.getSafeBottom();
+    const hudTop = height - 112 - bottomSafe;
+    const compactPanelWidth = Math.min(width - 108, 280);
+    const panelX = (width - compactPanelWidth) / 2;
 
     this.hudBg.clear();
     this.hudBg.fillStyle(0x020815, 0.42);
-    this.hudBg.fillRoundedRect(24, 48, width - 48, 78, 8);
-    this.hudBg.lineStyle(2, hudColor, 0.45 + state.hudPulse * 0.28);
-    this.hudBg.strokeRoundedRect(24, 48, width - 48, 78, 8);
-    this.hudBg.fillStyle(0x020815, 0.62);
-    this.hudBg.fillRoundedRect(14, height - 140, width - 28, 118, 10);
-    this.hudBg.lineStyle(2, hudColor, 0.42);
-    this.hudBg.strokeRoundedRect(14, height - 140, width - 28, 118, 10);
+    const banner = this.getProblemBannerLayout();
+    this.hudBg.fillRoundedRect((width - banner.width) / 2, banner.y - banner.height / 2, banner.width, banner.height, 8);
+    this.hudBg.lineStyle(2, hudColor, 0.32 + state.hudPulse * 0.3);
+    this.hudBg.strokeRoundedRect((width - banner.width) / 2, banner.y - banner.height / 2, banner.width, banner.height, 8);
+    this.hudBg.fillStyle(0x020815, 0.46);
+    this.hudBg.fillRoundedRect(panelX, hudTop, compactPanelWidth, 86, 10);
+    this.hudBg.lineStyle(2, hudColor, 0.34);
+    this.hudBg.strokeRoundedRect(panelX, hudTop, compactPanelWidth, 86, 10);
 
     this.hudBg.fillStyle(0x0a2034, 0.94);
-    this.hudBg.fillRoundedRect(24, height - 44, width - 48, 6, 3);
+    this.hudBg.fillRoundedRect(panelX + 16, hudTop + 70, compactPanelWidth - 32, 5, 3);
     this.hudBg.fillStyle(hudColor, 0.95);
-    this.hudBg.fillRoundedRect(24, height - 44, Math.max(12, (width - 48) * (state.boost / 100)), 6, 3);
+    this.hudBg.fillRoundedRect(panelX + 16, hudTop + 70, Math.max(10, (compactPanelWidth - 32) * (state.boost / 100)), 5, 3);
 
     this.hudBg.fillStyle(0x0a2034, 0.9);
-    this.hudBg.fillRoundedRect(width - 144, height - 108, 120, 7, 3);
+    this.hudBg.fillRoundedRect(width - 120, hudTop + 24, 92, 5, 3);
     this.hudBg.fillStyle(tempColor, 0.92);
-    this.hudBg.fillRoundedRect(width - 144, height - 108, 120 * Phaser.Math.Clamp(state.grillTemp / 100, 0, 1), 7, 3);
+    this.hudBg.fillRoundedRect(width - 120, hudTop + 24, 92 * Phaser.Math.Clamp(state.grillTemp / 100, 0, 1), 5, 3);
 
     this.rpm.clear();
     const rpmX = width / 2;
-    const rpmY = height - 76;
-    this.rpm.lineStyle(7, 0x17364b, 0.95);
+    const rpmY = hudTop + 42;
+    this.rpm.lineStyle(5, 0x17364b, 0.82);
     this.rpm.beginPath();
-    this.rpm.arc(rpmX, rpmY, 36, Phaser.Math.DegToRad(205), Phaser.Math.DegToRad(335), false);
+    this.rpm.arc(rpmX, rpmY, 31, Phaser.Math.DegToRad(205), Phaser.Math.DegToRad(335), false);
     this.rpm.strokePath();
-    this.rpm.lineStyle(7, hudColor, 0.95);
+    this.rpm.lineStyle(5, hudColor, 0.92);
     this.rpm.beginPath();
-    this.rpm.arc(rpmX, rpmY, 36, Phaser.Math.DegToRad(205), Phaser.Math.DegToRad(205 + 130 * rpmValue), false);
+    this.rpm.arc(rpmX, rpmY, 31, Phaser.Math.DegToRad(205), Phaser.Math.DegToRad(205 + 130 * rpmValue), false);
     this.rpm.strokePath();
 
-    const clusterX = width - 78;
-    const clusterY = height - 76;
+    const clusterX = width - 64;
+    const clusterY = hudTop + 50;
     this.dashCluster.clear();
     this.dashCluster.fillStyle(0x020815, 0.62);
-    this.dashCluster.fillRoundedRect(width - 130, height - 126, 108, 82, 8);
+    this.dashCluster.fillRoundedRect(width - 118, hudTop + 12, 96, 58, 8);
     this.dashCluster.lineStyle(2, hudColor, 0.36);
-    this.dashCluster.strokeRoundedRect(width - 130, height - 126, 108, 82, 8);
-    this.dashCluster.lineStyle(6, 0x17364b, 0.95);
+    this.dashCluster.strokeRoundedRect(width - 118, hudTop + 12, 96, 58, 8);
+    this.dashCluster.lineStyle(4, 0x17364b, 0.88);
     this.dashCluster.beginPath();
-    this.dashCluster.arc(clusterX, clusterY, 40, Phaser.Math.DegToRad(198), Phaser.Math.DegToRad(342), false);
+    this.dashCluster.arc(clusterX, clusterY, 27, Phaser.Math.DegToRad(198), Phaser.Math.DegToRad(342), false);
     this.dashCluster.strokePath();
-    this.dashCluster.lineStyle(6, hudColor, 0.98);
+    this.dashCluster.lineStyle(4, hudColor, 0.9);
     this.dashCluster.beginPath();
-    this.dashCluster.arc(clusterX, clusterY, 40, Phaser.Math.DegToRad(198), Phaser.Math.DegToRad(198 + 144 * rpmValue), false);
+    this.dashCluster.arc(clusterX, clusterY, 27, Phaser.Math.DegToRad(198), Phaser.Math.DegToRad(198 + 144 * rpmValue), false);
     this.dashCluster.strokePath();
     this.dashCluster.fillStyle(0x0a2034, 0.95);
-    this.dashCluster.fillRoundedRect(width - 118, height - 76, 78, 5, 3);
+    this.dashCluster.fillRoundedRect(width - 108, hudTop + 47, 68, 4, 3);
     this.dashCluster.fillStyle(0xff7a18, 0.95);
-    this.dashCluster.fillRoundedRect(width - 118, height - 76, 78 * (state.boost / 100), 5, 3);
+    this.dashCluster.fillRoundedRect(width - 108, hudTop + 47, 68 * (state.boost / 100), 4, 3);
     this.dashCluster.fillStyle(0x0a2034, 0.95);
-    this.dashCluster.fillRoundedRect(width - 118, height - 64, 78, 5, 3);
+    this.dashCluster.fillRoundedRect(width - 108, hudTop + 57, 68, 4, 3);
     this.dashCluster.fillStyle(tempColor, 0.95);
-    this.dashCluster.fillRoundedRect(width - 118, height - 64, 78 * Phaser.Math.Clamp(state.grillTemp / 100, 0, 1), 5, 3);
+    this.dashCluster.fillRoundedRect(width - 108, hudTop + 57, 68 * Phaser.Math.Clamp(state.grillTemp / 100, 0, 1), 4, 3);
 
-    this.speedText.setPosition(width / 2, height - 104);
-    this.speedUnit.setPosition(width / 2, height - 70);
     this.speedText.setColor(colorToCss(hudColor));
     this.speedUnit.setColor(colorToCss(hudColor));
     this.statusText.setColor(colorToCss(hudColor));
     this.tempText.setColor(colorToCss(tempColor));
-    this.scoreText.setX(width - 22);
-    this.comboText.setPosition(22, height - 124);
-    this.tempText.setPosition(width - 22, height - 124);
-    this.clusterText.setPosition(width - 32, height - 118);
-    this.questionText.setX(width / 2);
-    this.statusText.setPosition(width / 2, height - 43);
-    this.settingsButton.setPosition(22, height - 48);
+    this.updateCompactHud();
     const jumpPos = this.getJumpButtonPosition();
     const jumpReady = !state.jumping && !this.jumpLocked && this.jumpCooldown <= 0;
     if (jumpReady && !this.jumpWasReady) {
@@ -1489,10 +1550,8 @@ class RaceScene extends Phaser.Scene {
     this.jumpButton.setAlpha(jumpReady ? 1 : 0.58);
     this.jumpButton.setColor(jumpReady ? "#07111f" : "#9fb7c8");
     this.distanceText?.setX(width - 24);
-    this.problemPanel?.setPosition(width / 2, 88).setDisplaySize(width - 34, 82);
-    this.hudPanel?.setPosition(width / 2, height - 86).setDisplaySize(width - 24, 108);
-    this.boostIcon?.setPosition(34, height - 42);
-    this.tempIcon?.setPosition(width - 154, height - 105);
+    this.boostIcon?.setPosition(panelX + 28, hudTop + 72);
+    this.tempIcon?.setPosition(width - 136, hudTop + 26);
   }
 
   getHudColor() {
@@ -1507,6 +1566,47 @@ class RaceScene extends Phaser.Scene {
     if (state.grillTemp < 28) return 0x9ee7ff;
     if (state.grillTemp > 86) return 0xff375f;
     return 0xffcf54;
+  }
+
+  getUiSafeZones() {
+    const { width, height } = this.scale;
+    const bottomSafe = this.getSafeBottom();
+    const banner = this.getProblemBannerLayout();
+    const jump = this.getJumpButtonPosition();
+    return {
+      problemBanner: {
+        x: banner.x - banner.width / 2,
+        y: Math.min(height * UI_SAFE_ZONES.problemBanner.topRatio, banner.y - banner.height * 0.58),
+        width: banner.width,
+        height: Math.max(banner.height * 1.25, height * (UI_SAFE_ZONES.problemBanner.bottomRatio - UI_SAFE_ZONES.problemBanner.topRatio))
+      },
+      hud: {
+        x: 0,
+        y: height - UI_SAFE_ZONES.hud.topFromBottom - bottomSafe,
+        width,
+        height: UI_SAFE_ZONES.hud.topFromBottom + bottomSafe
+      },
+      jumpButton: {
+        x: width - UI_SAFE_ZONES.jumpButton.right,
+        y: height - UI_SAFE_ZONES.jumpButton.bottom - bottomSafe,
+        width: UI_SAFE_ZONES.jumpButton.right,
+        height: UI_SAFE_ZONES.jumpButton.bottom + bottomSafe
+      },
+      riderFocus: {
+        x: width * 0.18,
+        y: height * UI_SAFE_ZONES.riderFocus.topRatio,
+        width: width * 0.64,
+        height: height * (UI_SAFE_ZONES.riderFocus.bottomRatio - UI_SAFE_ZONES.riderFocus.topRatio)
+      }
+    };
+  }
+
+  isInUiSafeZone(x, y, zoneNames = ["problemBanner", "hud", "jumpButton", "riderFocus"]) {
+    const zones = this.getUiSafeZones();
+    return zoneNames.some((name) => {
+      const zone = zones[name];
+      return zone && x >= zone.x && x <= zone.x + zone.width && y >= zone.y && y <= zone.y + zone.height;
+    });
   }
 
   createInput() {
@@ -1731,6 +1831,20 @@ class RaceScene extends Phaser.Scene {
     return this.getTrackCenterAtY(y) + laneOffset * perspectiveLaneWidth;
   }
 
+  getGateVisualScale(gate) {
+    const perspective = this.getPerspectiveScale(gate.y);
+    const tutorialBoost = state.mode === "tutorial" ? 1.1 : 1;
+    return Phaser.Math.Clamp(perspective * 0.68 * tutorialBoost, 0.24, state.mode === "tutorial" ? 1.08 : 0.9);
+  }
+
+  applyGateVisualBalance(gate) {
+    const scale = this.getGateVisualScale(gate);
+    gate.setScale(scale);
+    gate.setDepth(Math.floor(gate.y * 0.02) + 11);
+    if (gate.label) gate.label.setFontSize(gate.getData("isBoost") ? (state.mode === "tutorial" ? 14 : 12) : (state.mode === "tutorial" ? 25 : 21));
+    if (gate.gateArt) gate.gateArt.setAlpha(state.mode === "tutorial" ? 0.96 : 0.78);
+  }
+
   createGatePair(initial = false) {
     state.learningStats = loadLearningStats();
     const problem = state.mode === "tutorial"
@@ -1765,20 +1879,23 @@ class RaceScene extends Phaser.Scene {
       gate.frame = frame;
       gate.label = label;
       this.gates.push(gate);
+      this.applyGateVisualBalance(gate);
       this.drawGate(gate, value === "BOOST");
     }
   }
 
   drawGate(gate, isBoost) {
     gate.frame.clear();
-    const color = isBoost ? 0xffcf54 : gate.getData("isCorrect") ? 0x35d4ff : 0xff7a18;
-    if (gate.gateArt) gate.gateArt.setTint(color).setAlpha(isBoost ? 0.92 : 0.78);
-    gate.frame.lineStyle(4, color, 0.88);
-    gate.frame.strokeRoundedRect(-38, -42, 76, 84, 10);
+    const isCorrect = gate.getData("isCorrect");
+    const color = isBoost ? 0xffcf54 : isCorrect ? 0x42ff9b : 0xff7a18;
+    const alpha = state.mode === "tutorial" ? 0.96 : isBoost ? 0.78 : 0.72;
+    if (gate.gateArt) gate.gateArt.setTint(color).setAlpha(alpha);
+    gate.frame.lineStyle(state.mode === "tutorial" ? 4 : 3, color, state.mode === "tutorial" ? 0.92 : 0.76);
+    gate.frame.strokeRoundedRect(-34, -38, 68, 76, 10);
     gate.frame.fillStyle(isBoost ? 0xffcf54 : 0x020815, isBoost ? 0.2 : 0.34);
-    gate.frame.fillRoundedRect(-32, -35, 64, 70, 8);
+    gate.frame.fillRoundedRect(-29, -31, 58, 62, 8);
     gate.frame.lineStyle(1, 0xffffff, 0.28);
-    gate.frame.lineBetween(-22, 0, 22, 0);
+    gate.frame.lineBetween(-19, 0, 19, 0);
   }
 
   update(time, delta) {
@@ -1794,7 +1911,7 @@ class RaceScene extends Phaser.Scene {
     state.boostPulse = Math.max(0, state.boostPulse - dt * 1.4);
     state.riderLandPulse = Math.max(0, state.riderLandPulse - dt * 5.4);
     state.riderSlidePulse = Math.max(0, state.riderSlidePulse - dt * 3.2);
-    if (state.hudPulse <= 0 && state.boostPulse <= 0) state.hudMode = "normal";
+    if (state.hudPulse <= 0 && state.boostPulse <= 0) this.setHudVisualState("normal");
     this.drawRider(this.lane - 1);
 
     const speedFactor = state.mode === "tutorial" ? 0.74 + state.boost / 120 : 1 + state.boost / 82 + state.speedKick / 110 + (state.stage.id - 1) * 0.035;
@@ -1975,9 +2092,10 @@ class RaceScene extends Phaser.Scene {
   }
 
   drawDecorativeCourseObject(object, x, y, scale, side, index, lowEffects) {
+    const safeZone = this.isInUiSafeZone(x, y);
     const type = object.getData("type");
     const key = object.getData("textureKey");
-    object.setDepth(Math.floor(y * 0.02) + (type === "pine" ? 6 : 8));
+    object.setDepth(safeZone ? 5 : Math.floor(y * 0.02) + (type === "pine" ? 6 : 8));
     if (object.setTexture && this.hasTexture(key)) {
       object.setTexture(key);
       object.setPosition(x, y);
@@ -1990,7 +2108,7 @@ class RaceScene extends Phaser.Scene {
         "checkpoint-flag": 0.26
       }[type] || 0.28;
       object.setScale(typeScale * scale);
-      object.setAlpha((lowEffects ? 0.56 : 0.72) + Math.min(scale * 0.18, 0.22));
+      object.setAlpha(safeZone ? 0.18 : (lowEffects ? 0.56 : 0.72) + Math.min(scale * 0.18, 0.22));
       object.setFlipX(side < 0);
       return;
     }
@@ -1998,6 +2116,7 @@ class RaceScene extends Phaser.Scene {
     object.clear();
     object.setPosition(x, y);
     object.setScale(scale);
+    object.setAlpha(safeZone ? 0.22 : 1);
     if (type === "pine") {
       object.fillStyle(0x0e3f36, 0.78);
       object.fillTriangle(0, -34, -20, 18, 20, 18);
@@ -2060,9 +2179,7 @@ class RaceScene extends Phaser.Scene {
       const gate = this.gates[i];
       gate.y += delta * 0.285 * speedFactor;
       gate.x = this.gateLaneToX(gate.getData("lane"), gate.y);
-      const depth = this.getPerspectiveScale(gate.y);
-      gate.setScale(Phaser.Math.Clamp(depth * 0.78, 0.28, 1.04));
-      gate.setDepth(Math.floor(gate.y * 0.02) + 11);
+      this.applyGateVisualBalance(gate);
 
       if (this.isGateInCatchWindow(gate)) {
         this.resolveGate(gate);
@@ -2121,7 +2238,7 @@ class RaceScene extends Phaser.Scene {
     state.boost = Math.min(100, state.boost + 25);
     state.grillTemp = Math.min(OVERHEAT_LIMIT + 8, state.grillTemp + 5);
     state.speedKick = Math.min(70, state.speedKick + 20);
-    state.hudMode = "correct";
+    this.setHudVisualState("correct");
     state.hudPulse = 1;
     state.flashPulse = 1;
     feedback.trigger("correct");
@@ -2155,7 +2272,7 @@ class RaceScene extends Phaser.Scene {
     state.grillTemp = Math.max(0, state.grillTemp - 18);
     state.speed = Math.max(42, state.speed - 24);
     state.speedKick = 0;
-    state.hudMode = "cold";
+    this.setHudVisualState("cold");
     state.hudPulse = 0.7;
     state.warningPulse = 1;
     state.riderSlidePulse = 1;
@@ -2170,7 +2287,7 @@ class RaceScene extends Phaser.Scene {
     state.wrongStreak = 0;
     state.grillTemp = Math.min(OVERHEAT_LIMIT + 8, state.grillTemp + 4);
     state.speedKick = Math.min(90, state.speedKick + 34);
-    state.hudMode = "boost";
+    this.setHudVisualState("boost");
     state.hudPulse = 1;
     state.boostPulse = 1;
     feedback.trigger("boost");
