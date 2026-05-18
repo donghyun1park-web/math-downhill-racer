@@ -1,4 +1,4 @@
-const CACHE_NAME = "math-downhill-racer-v9";
+const CACHE_NAME = "math-tower-v1";
 const CORE_ASSETS = [
   "./",
   "./index.html",

@@ -42,7 +42,7 @@ test("service worker caches runtime PWA files and icons", () => {
   ]) {
     assert.match(sw, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
-  assert.match(sw, /math-downhill-racer-v\d+/);
+  assert.match(sw, /math-(downhill-racer|tower)-v\d+/);
 });
 
 test("index links manifest and theme color", () => {
