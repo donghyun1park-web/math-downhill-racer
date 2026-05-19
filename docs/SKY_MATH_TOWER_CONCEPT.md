@@ -50,6 +50,20 @@ Stage 1 is unlocked by default. Each cleared stage unlocks the next one through 
 - Game over happens when lives reach 0.
 - Results show score, accuracy, best combo, and height reached.
 
+## Vertical Climb Feel
+
+Correct answers should feel like climbing one floor, not sliding sideways on one screen.
+
+- The current safe block sits near the lower play area.
+- Answer blocks appear higher on the screen.
+- A correct tap sends the character upward in an arc.
+- On landing, the world briefly shifts downward as if the camera climbed with the player.
+- Old blocks fade and fall below the screen.
+- New answer blocks descend from above for the next floor.
+- Height feedback pulses with `+1 STEP!` or `FLOOR UP!`.
+
+Wrong answers do not move the tower upward. They keep the player on the current floor, shake or crack the selected block, and reduce hearts only outside tutorial mode.
+
 Stars keep the existing reward logic:
 
 - 1 star: clear the stage
