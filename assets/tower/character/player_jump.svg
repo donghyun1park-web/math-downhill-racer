@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 112" role="img" aria-labelledby="title">
+  <title id="title">tower player jump</title>
+  <ellipse cx="48" cy="101" rx="22" ry="6" fill="#17345f" opacity=".11"/>
+  <path d="M27 46c0-16 10-28 21-28s21 12 21 28v20H27Z" fill="#ffc84a" stroke="#fff" stroke-width="5"/>
+  <circle cx="48" cy="34" r="17" fill="#ffe4ba" stroke="#17345f" stroke-width="4"/>
+  <path d="M29 31c7-18 31-20 38 0-13-5-26-5-38 0Z" fill="#35a7ff"/>
+  <path d="M28 56 13 34M68 56l15-22" stroke="#3d7cff" stroke-width="9" stroke-linecap="round"/>
+  <path d="M40 66 29 88M57 66l13 21" stroke="#264d8f" stroke-width="10" stroke-linecap="round"/>
+</svg>

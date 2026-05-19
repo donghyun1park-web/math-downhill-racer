@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 112" role="img" aria-labelledby="title">
+  <title id="title">tower player wrong</title>
+  <ellipse cx="48" cy="100" rx="30" ry="8" fill="#17345f" opacity=".16"/>
+  <g transform="rotate(-7 48 56)">
+    <path d="M27 46c0-16 10-28 21-28s21 12 21 28v22H27Z" fill="#ff6b81" stroke="#fff" stroke-width="5"/>
+    <circle cx="48" cy="36" r="17" fill="#ffe4ba" stroke="#17345f" stroke-width="4"/>
+    <path d="M29 33c7-18 31-20 38 0-13-5-26-5-38 0Z" fill="#35a7ff"/>
+    <path d="M28 60 11 55M68 60l17-5" stroke="#3d7cff" stroke-width="9" stroke-linecap="round"/>
+    <path d="M39 68v23M57 68v23" stroke="#264d8f" stroke-width="10" stroke-linecap="round"/>
+  </g>
+  <path d="M73 18h10M78 13v10" stroke="#ff5373" stroke-width="4" stroke-linecap="round"/>
+</svg>

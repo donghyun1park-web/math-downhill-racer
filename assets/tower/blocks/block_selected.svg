@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 96" role="img" aria-labelledby="title">
+  <title id="title">floating answer block selected</title>
+  <ellipse cx="80" cy="79" rx="62" ry="14" fill="#ffcf54" opacity=".28"/>
+  <path d="M20 29 38 15h84l18 14v33L120 80H40L20 62Z" fill="#fff8d7" stroke="#ffcf54" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M32 34h96v20H32Z" fill="#ffffff"/>
+  <path d="M40 64h80l-12 10H52Z" fill="#ffc452" opacity=".65"/>
+</svg>

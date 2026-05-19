@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 112" role="img" aria-labelledby="title">
+  <title id="title">tower player land</title>
+  <ellipse cx="48" cy="100" rx="34" ry="9" fill="#17345f" opacity=".2"/>
+  <path d="M25 52c0-15 11-25 23-25s23 10 23 25v18H25Z" fill="#ffc84a" stroke="#fff" stroke-width="5"/>
+  <circle cx="48" cy="40" r="16" fill="#ffe4ba" stroke="#17345f" stroke-width="4"/>
+  <path d="M30 38c7-17 29-18 36 0-12-5-24-5-36 0Z" fill="#7b5cff"/>
+  <path d="M28 65 12 70M68 65l16 5" stroke="#3d7cff" stroke-width="9" stroke-linecap="round"/>
+  <path d="M39 70 27 89M57 70l12 19" stroke="#264d8f" stroke-width="10" stroke-linecap="round"/>
+</svg>

@@ -94,6 +94,14 @@ Sky Math Tower should read as a bright vertical adventure before it reads as a q
 - clear answer numbers on blocks
 - friendly but slightly tense height feeling
 
+Art asset direction:
+
+- Answer blocks use lightweight SVG platform art for normal, selected, correct, wrong, cracked, and locked states.
+- Numbers are always Phaser Text layered above the block art so math content stays editable and readable.
+- The player uses simple SVG states for idle, jump, land, wrong, and celebrate, with Phaser Graphics as fallback.
+- Background art uses far/near cloud layers, a distant tower silhouette, floating islands, and depth fog.
+- Correct answers add sparkle, landing dust, and floor-up glow; wrong answers add a crack flash and block shake.
+
 Forbidden direction:
 
 - MTB graphics should not be reused in the default tower mode.

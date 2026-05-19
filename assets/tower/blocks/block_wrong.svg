@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 96" role="img" aria-labelledby="title">
+  <title id="title">floating answer block wrong</title>
+  <ellipse cx="80" cy="79" rx="62" ry="14" fill="#ff5373" opacity=".32"/>
+  <path d="M20 29 38 15h84l18 14v33L120 80H40L20 62Z" fill="#ffe7ed" stroke="#ff5373" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M32 34h96v20H32Z" fill="#fff3f6"/>
+  <path d="m62 31 36 36M98 31 62 67" stroke="#d91f46" stroke-width="7" stroke-linecap="round" opacity=".42"/>
+</svg>

@@ -88,6 +88,10 @@ const SKY_TOWER_TUTORIAL_STEPS = [
     moving: true
   }
 ];
+const TOWER_JUMP_DURATION_MS = 450;
+const TOWER_LANDING_FEEDBACK_MS = 180;
+const TOWER_FLOOR_TRANSITION_MS = 450;
+const TOWER_BLOCK_SPAWN_MS = 320;
 const UI_SAFE_ZONES = {
   problemBanner: { topRatio: 0.055, bottomRatio: 0.16 },
   hud: { topFromBottom: 124 },
@@ -170,7 +174,28 @@ const ASSETS = {
   mtbBannerMathSpeed: "assets/environment/mtb_banner_math_speed.svg",
   mtbCheckpointFlag: "assets/environment/mtb_checkpoint_flag.svg",
   mtbSpectatorFlag: "assets/environment/mtb_spectator_flag.svg",
-  boostSpark: "assets/effects/boost_spark.svg"
+  boostSpark: "assets/effects/boost_spark.svg",
+  towerBlockNormal: "assets/tower/blocks/block_normal.svg",
+  towerBlockSelected: "assets/tower/blocks/block_selected.svg",
+  towerBlockCorrect: "assets/tower/blocks/block_correct.svg",
+  towerBlockWrong: "assets/tower/blocks/block_wrong.svg",
+  towerBlockCracked: "assets/tower/blocks/block_cracked.svg",
+  towerBlockLocked: "assets/tower/blocks/block_locked.svg",
+  towerPlayerIdle: "assets/tower/character/player_idle.svg",
+  towerPlayerJump: "assets/tower/character/player_jump.svg",
+  towerPlayerLand: "assets/tower/character/player_land.svg",
+  towerPlayerWrong: "assets/tower/character/player_wrong.svg",
+  towerPlayerCelebrate: "assets/tower/character/player_celebrate.svg",
+  towerCloudFar: "assets/tower/background/cloud_far.svg",
+  towerCloudNear: "assets/tower/background/cloud_near.svg",
+  towerDistantTower: "assets/tower/background/distant_tower.svg",
+  towerFloatingIsland: "assets/tower/background/floating_island.svg",
+  towerDepthFog: "assets/tower/background/depth_fog.svg",
+  towerLandingDust: "assets/tower/effects/landing_dust.svg",
+  towerCorrectSparkle: "assets/tower/effects/correct_sparkle.svg",
+  towerWrongCrackFlash: "assets/tower/effects/wrong_crack_flash.svg",
+  towerFloorUpGlow: "assets/tower/effects/floor_up_glow.svg",
+  towerStarGlow: "assets/tower/ui/star_glow.svg"
 };
 
 const towerState = {
@@ -621,6 +646,27 @@ class BootScene extends Phaser.Scene {
     this.load.svg("mtbCheckpointFlag", ASSETS.mtbCheckpointFlag);
     this.load.svg("mtbSpectatorFlag", ASSETS.mtbSpectatorFlag);
     this.load.svg("boostSpark", ASSETS.boostSpark);
+    this.load.svg("towerBlockNormal", ASSETS.towerBlockNormal);
+    this.load.svg("towerBlockSelected", ASSETS.towerBlockSelected);
+    this.load.svg("towerBlockCorrect", ASSETS.towerBlockCorrect);
+    this.load.svg("towerBlockWrong", ASSETS.towerBlockWrong);
+    this.load.svg("towerBlockCracked", ASSETS.towerBlockCracked);
+    this.load.svg("towerBlockLocked", ASSETS.towerBlockLocked);
+    this.load.svg("towerPlayerIdle", ASSETS.towerPlayerIdle);
+    this.load.svg("towerPlayerJump", ASSETS.towerPlayerJump);
+    this.load.svg("towerPlayerLand", ASSETS.towerPlayerLand);
+    this.load.svg("towerPlayerWrong", ASSETS.towerPlayerWrong);
+    this.load.svg("towerPlayerCelebrate", ASSETS.towerPlayerCelebrate);
+    this.load.svg("towerCloudFar", ASSETS.towerCloudFar);
+    this.load.svg("towerCloudNear", ASSETS.towerCloudNear);
+    this.load.svg("towerDistantTower", ASSETS.towerDistantTower);
+    this.load.svg("towerFloatingIsland", ASSETS.towerFloatingIsland);
+    this.load.svg("towerDepthFog", ASSETS.towerDepthFog);
+    this.load.svg("towerLandingDust", ASSETS.towerLandingDust);
+    this.load.svg("towerCorrectSparkle", ASSETS.towerCorrectSparkle);
+    this.load.svg("towerWrongCrackFlash", ASSETS.towerWrongCrackFlash);
+    this.load.svg("towerFloorUpGlow", ASSETS.towerFloorUpGlow);
+    this.load.svg("towerStarGlow", ASSETS.towerStarGlow);
   }
 
   create() {
@@ -1025,6 +1071,15 @@ class ResultScene extends Phaser.Scene {
     );
     panel.fillRect(0, 0, width, height);
     if (towerMode) {
+      if (this.textures.exists("towerDistantTower")) {
+        this.add.image(width * 0.78, height * 0.57, "towerDistantTower").setAlpha(0.28).setDisplaySize(68, height * 0.32);
+      }
+      if (this.textures.exists("towerStarGlow")) {
+        this.add.image(width / 2, 174, "towerStarGlow").setAlpha(cleared ? 0.82 : 0.22).setDisplaySize(96, 96);
+      }
+      if (this.textures.exists(cleared ? "towerPlayerCelebrate" : "towerPlayerWrong")) {
+        this.add.image(width / 2, 94, cleared ? "towerPlayerCelebrate" : "towerPlayerWrong").setDisplaySize(74, 86);
+      }
       panel.fillStyle(0xffffff, 0.4);
       panel.fillCircle(width * 0.2, 94, 28);
       panel.fillCircle(width * 0.28, 104, 22);
@@ -1198,11 +1253,13 @@ class SkyTowerScene extends Phaser.Scene {
     }
     this.cameras.main.setBackgroundColor("#87d9ff");
     this.world = this.add.graphics();
+    this.backgroundArtLayer = this.add.container(0, 0).setDepth(3);
     this.depthFog = this.add.graphics().setDepth(4);
     this.cloudLayer = this.add.container(0, 0).setDepth(5);
     this.blockLayer = this.add.container(0, 0).setDepth(20);
     this.fxLayer = this.add.container(0, 0).setDepth(60);
     this.drawSkyTowerBackground();
+    this.createTowerBackgroundArt();
     this.createCloudLayer();
     this.createTowerHud();
     this.createTowerPlayer();
@@ -1212,6 +1269,7 @@ class SkyTowerScene extends Phaser.Scene {
     this.input.on("pointerdown", () => feedback.unlock());
     this.scale.on("resize", () => {
       this.drawSkyTowerBackground();
+      this.createTowerBackgroundArt();
       this.createCloudLayer();
       this.layoutTowerHud();
       this.updateDebugTowerStateOverlay();
@@ -1233,6 +1291,10 @@ class SkyTowerScene extends Phaser.Scene {
     this.drawSkyTowerBackground();
   }
 
+  hasTexture(key) {
+    return this.textures?.exists(key);
+  }
+
   drawSkyTowerBackground() {
     const { width, height } = this.scale;
     const climbShift = towerState.cameraOffsetY || 0;
@@ -1252,23 +1314,50 @@ class SkyTowerScene extends Phaser.Scene {
     this.drawDepthFog();
   }
 
+  createTowerBackgroundArt() {
+    if (!this.backgroundArtLayer) return;
+    const { width, height } = this.scale;
+    this.backgroundArtLayer.removeAll(true);
+    if (this.hasTexture("towerDistantTower")) {
+      const tower = this.add.image(width * 0.76, height * 0.55, "towerDistantTower")
+        .setAlpha(0.38)
+        .setDisplaySize(74, height * 0.34);
+      this.backgroundArtLayer.add(tower);
+    }
+    if (this.hasTexture("towerFloatingIsland")) {
+      const leftIsland = this.add.image(width * 0.22, height * 0.64, "towerFloatingIsland")
+        .setAlpha(0.42)
+        .setDisplaySize(132, 82);
+      const rightIsland = this.add.image(width * 0.86, height * 0.72, "towerFloatingIsland")
+        .setAlpha(0.3)
+        .setDisplaySize(96, 58);
+      this.backgroundArtLayer.add([leftIsland, rightIsland]);
+    }
+  }
+
   createCloudLayer() {
     const { width, height } = this.scale;
     this.cloudLayer.removeAll(true);
     const count = state.performance.lowEffectsMode ? 4 : 7;
     this.cloudSprites = [];
     for (let i = 0; i < count; i += 1) {
-      const cloud = this.add.graphics();
+      const useArt = this.hasTexture(i % 2 ? "towerCloudNear" : "towerCloudFar");
+      const cloud = useArt ? this.add.image(0, 0, i % 2 ? "towerCloudNear" : "towerCloudFar") : this.add.graphics();
       const x = (i * 89) % (width + 120) - 50;
       const y = height * 0.16 + (i % 4) * 88;
       cloud.setPosition(x, y);
       cloud.setData("baseY", y);
       cloud.setData("speed", 5 + (i % 3) * 2);
-      cloud.fillStyle(0xffffff, 0.58);
-      cloud.fillCircle(0, 0, 20 + (i % 2) * 5);
-      cloud.fillCircle(24, 5, 17);
-      cloud.fillCircle(-24, 7, 15);
-      cloud.fillEllipse(4, 12, 78, 24);
+      if (useArt) {
+        cloud.setAlpha(0.62);
+        cloud.setDisplaySize(i % 2 ? 118 : 92, i % 2 ? 52 : 40);
+      } else {
+        cloud.fillStyle(0xffffff, 0.58);
+        cloud.fillCircle(0, 0, 20 + (i % 2) * 5);
+        cloud.fillCircle(24, 5, 17);
+        cloud.fillCircle(-24, 7, 15);
+        cloud.fillEllipse(4, 12, 78, 24);
+      }
       this.cloudLayer.add(cloud);
       this.cloudSprites.push(cloud);
     }
@@ -1378,6 +1467,13 @@ class SkyTowerScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.player = this.add.container(width / 2, height * 0.76).setDepth(42);
     const shadow = this.add.ellipse(0, 26, 62, 16, 0x17345f, 0.18);
+    const sprite = this.createTowerCharacterSprite("towerPlayerIdle");
+    if (sprite) {
+      this.playerParts = { shadow, sprite };
+      this.player.add([shadow, sprite]);
+      this.updateTowerPlayerState("idle");
+      return;
+    }
     const body = this.add.circle(0, -2, 24, 0xffc84a, 1).setStrokeStyle(4, 0xffffff, 1);
     const face = this.add.circle(0, -9, 12, 0xfff1c7, 1);
     const hat = this.add.triangle(0, -30, -16, -12, 0, -42, 16, -12, 0x35a7ff, 1);
@@ -1388,9 +1484,26 @@ class SkyTowerScene extends Phaser.Scene {
     this.updateTowerPlayerState("idle");
   }
 
+  createTowerCharacterSprite(key) {
+    if (!this.hasTexture(key)) return null;
+    return this.add.image(0, -10, key).setDisplaySize(86, 101);
+  }
+
   updateTowerPlayerState(stateName) {
     if (!this.player || !this.playerParts) return;
     this.towerPlayerState = stateName;
+    if (this.playerParts.sprite) {
+      const key = stateName === "jump" ? "towerPlayerJump"
+        : stateName === "land" ? "towerPlayerLand"
+          : stateName === "wrong" ? "towerPlayerWrong"
+            : stateName === "celebrate" ? "towerPlayerCelebrate"
+              : "towerPlayerIdle";
+      this.playerParts.sprite.setTexture(this.hasTexture(key) ? key : "towerPlayerIdle");
+      this.player.setScale(stateName === "land" ? 1.08 : stateName === "jump" ? 1.04 : 1);
+      this.player.setAngle(stateName === "wrong" ? -6 : 0);
+      this.playerParts.shadow.setScale(stateName === "jump" ? 0.64 : stateName === "land" ? 1.2 : 1);
+      return;
+    }
     const { body, hat, leftArm, rightArm, shadow } = this.playerParts;
     this.player.setScale(1);
     this.player.setAngle(0);
@@ -1426,7 +1539,7 @@ class SkyTowerScene extends Phaser.Scene {
     this.updateTutorialCopy();
     this.createAnswerBlocks();
     this.updateTowerHud();
-    this.time.delayedCall(360, () => {
+    this.time.delayedCall(TOWER_BLOCK_SPAWN_MS + 40, () => {
       if (towerState.roundState === "spawningNextFloor") towerState.roundState = "waitingForAnswer";
       this.updateDebugTowerStateOverlay();
     });
@@ -1485,13 +1598,19 @@ class SkyTowerScene extends Phaser.Scene {
   createAnswerBlock(block) {
     const container = this.add.container(block.x, block.y).setDepth(24);
     const g = this.add.graphics();
-    this.drawFloatingBlock(g, block);
+    const artKey = this.getTowerBlockTextureKey(block.visualState);
+    const art = this.hasTexture(artKey) ? this.add.image(0, 0, artKey).setDisplaySize(134, 82) : null;
+    if (art) {
+      g.setVisible(false);
+    } else {
+      this.drawFloatingBlock(g, block);
+    }
     const label = this.add.text(0, -5, String(block.answer), {
       fontFamily: "Arial Black, Arial",
-      fontSize: "28px",
+      fontSize: "31px",
       color: "#17345f",
       stroke: "#ffffff",
-      strokeThickness: 5
+      strokeThickness: 6
     }).setOrigin(0.5);
     const zone = this.add.zone(0, 0, 132, 88).setInteractive({ useHandCursor: true });
     zone.setData("touchTarget", "answer-block");
@@ -1506,7 +1625,9 @@ class SkyTowerScene extends Phaser.Scene {
         this.setBlockVisualState(block.id, "normal");
       }
     });
-    container.add([g, label, zone]);
+    container.add(art ? [art, g, label, zone] : [g, label, zone]);
+    block.art = art;
+    block.graphic = g;
     block.label = label;
     block.hitZone = zone;
     container.setAlpha(0);
@@ -1515,10 +1636,19 @@ class SkyTowerScene extends Phaser.Scene {
       targets: container,
       y: block.y,
       alpha: 1,
-      duration: 350,
+      duration: TOWER_BLOCK_SPAWN_MS,
       ease: "Back.easeOut"
     });
     return container;
+  }
+
+  getTowerBlockTextureKey(visualState) {
+    if (visualState === "selected") return "towerBlockSelected";
+    if (visualState === "correct") return "towerBlockCorrect";
+    if (visualState === "wrong") return "towerBlockWrong";
+    if (visualState === "crack") return "towerBlockCracked";
+    if (visualState === "locked") return "towerBlockLocked";
+    return "towerBlockNormal";
   }
 
   drawFloatingBlock(g, block) {
@@ -1544,8 +1674,12 @@ class SkyTowerScene extends Phaser.Scene {
 
   updateAnswerBlockVisual(block) {
     if (!block?.container) return;
-    const graphic = block.container.list[0];
-    this.drawFloatingBlock(graphic, block);
+    if (block.art) {
+      const key = this.getTowerBlockTextureKey(block.visualState);
+      if (this.hasTexture(key)) block.art.setTexture(key);
+    } else {
+      this.drawFloatingBlock(block.graphic || block.container.list[0], block);
+    }
     block.label?.setColor(block.visualState === "wrong" || block.visualState === "crack" ? "#ffffff" : "#17345f");
     block.label?.setScale(block.visualState === "selected" ? 1.08 : 1);
   }
@@ -1612,13 +1746,29 @@ class SkyTowerScene extends Phaser.Scene {
           this.finishTowerRun(true, "Tower complete");
         }
       } else {
-        this.time.delayedCall(220, () => this.startFloorTransition(block));
+        this.time.delayedCall(TOWER_LANDING_FEEDBACK_MS, () => this.startFloorTransition(block));
       }
     });
   }
 
   showFloorUpFeedback() {
     if (!this.floorFeedbackText) return;
+    if (this.hasTexture("towerFloorUpGlow")) {
+      const glow = this.add.image(this.scale.width / 2, 196, "towerFloorUpGlow")
+        .setDepth(61)
+        .setAlpha(0.88)
+        .setDisplaySize(170, 112);
+      this.fxLayer.add(glow);
+      this.tweens.add({
+        targets: glow,
+        y: 154,
+        alpha: 0,
+        scale: 1.22,
+        duration: 620,
+        ease: "Sine.easeOut",
+        onComplete: () => glow.destroy()
+      });
+    }
     const message = towerState.currentHeight % 2 === 0 ? "FLOOR UP!" : "+1 STEP!";
     this.floorFeedbackText
       .setText(message)
@@ -1667,20 +1817,20 @@ class SkyTowerScene extends Phaser.Scene {
       targets: landedBlock.container,
       x: width / 2,
       y: height * 0.81,
-      duration: 520,
+      duration: TOWER_FLOOR_TRANSITION_MS,
       ease: "Sine.easeInOut"
     });
     this.tweens.add({
       targets: this.player,
       x: width / 2,
       y: height * 0.76,
-      duration: 520,
+      duration: TOWER_FLOOR_TRANSITION_MS,
       ease: "Sine.easeInOut"
     });
     this.tweens.add({
       targets: transition,
       progress: 1,
-      duration: 520,
+      duration: TOWER_FLOOR_TRANSITION_MS,
       ease: "Sine.easeInOut",
       onUpdate: () => {
         towerState.floorTransitionProgress = transition.progress;
@@ -1720,7 +1870,7 @@ class SkyTowerScene extends Phaser.Scene {
     this.tweens.add({
       targets: jump,
       t: 1,
-      duration: 430,
+      duration: TOWER_JUMP_DURATION_MS,
       ease: "Sine.easeInOut",
       onUpdate: () => {
         const t = jump.t;
@@ -1738,6 +1888,32 @@ class SkyTowerScene extends Phaser.Scene {
   }
 
   createLandingBurst(x, y) {
+    if (this.hasTexture("towerLandingDust")) {
+      const dust = this.add.image(x, y + 24, "towerLandingDust").setDepth(61).setAlpha(0.84).setDisplaySize(112, 56);
+      this.fxLayer.add(dust);
+      this.tweens.add({
+        targets: dust,
+        alpha: 0,
+        scale: 1.35,
+        duration: 360,
+        ease: "Sine.easeOut",
+        onComplete: () => dust.destroy()
+      });
+    }
+    if (this.hasTexture("towerCorrectSparkle")) {
+      const sparkle = this.add.image(x + 44, y - 42, "towerCorrectSparkle").setDepth(63).setAlpha(0.96).setDisplaySize(42, 42);
+      this.fxLayer.add(sparkle);
+      this.tweens.add({
+        targets: sparkle,
+        y: y - 72,
+        alpha: 0,
+        angle: 80,
+        scale: 1.4,
+        duration: 520,
+        ease: "Sine.easeOut",
+        onComplete: () => sparkle.destroy()
+      });
+    }
     for (let i = 0; i < 8; i += 1) {
       const particle = this.add.circle(x, y + 12, 4, i % 2 ? 0xffcf54 : 0xffffff, 0.9).setDepth(62);
       this.fxLayer.add(particle);
@@ -1764,6 +1940,7 @@ class SkyTowerScene extends Phaser.Scene {
       saveLearningStats(updateLearningStats(loadLearningStats(), towerState.currentProblem, false, towerState.stageId));
     }
     this.setBlockVisualState(block.id, "crack");
+    this.createWrongFlash(block.x, block.y);
     this.updateTowerPlayerState("wrong");
     feedback.trigger("wrong");
     this.cameras.main.shake(120, 0.004);
@@ -1799,6 +1976,20 @@ class SkyTowerScene extends Phaser.Scene {
     this.towerHintText?.setAlpha(this.isTutorial || towerState.currentHeight < 2 ? 0.84 : 0);
   }
 
+  createWrongFlash(x, y) {
+    if (!this.hasTexture("towerWrongCrackFlash")) return;
+    const flash = this.add.image(x, y - 6, "towerWrongCrackFlash").setDepth(63).setAlpha(0.92).setDisplaySize(120, 80);
+    this.fxLayer.add(flash);
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      scale: 1.18,
+      duration: 320,
+      ease: "Sine.easeOut",
+      onComplete: () => flash.destroy()
+    });
+  }
+
   createDebugTowerStateOverlay() {
     if (!DEBUG_TOWER_STATE_ENABLED) return;
     this.debugTowerStateText = this.add.text(12, 238, "", {
@@ -1827,6 +2018,7 @@ class SkyTowerScene extends Phaser.Scene {
   finishTowerRun(cleared, reason) {
     if (towerState.roundState === "stageClear" || towerState.roundState === "gameOver") return;
     towerState.roundState = cleared ? "stageClear" : "gameOver";
+    this.updateTowerPlayerState(cleared ? "celebrate" : "wrong");
     const accuracy = towerState.totalQuestions ? Math.round((towerState.correctAnswers / towerState.totalQuestions) * 100) : 0;
     const stars = calculateStars({ cleared, accuracy, bestCombo: towerState.bestCombo });
     const result = {

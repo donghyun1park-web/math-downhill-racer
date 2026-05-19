@@ -1,4 +1,4 @@
-const CACHE_NAME = "math-tower-v4";
+const CACHE_NAME = "math-tower-v5";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -67,6 +67,27 @@ const CORE_ASSETS = [
   "./assets/environment/mtb_checkpoint_flag.svg",
   "./assets/environment/mtb_spectator_flag.svg",
   "./assets/effects/boost_spark.svg",
+  "./assets/tower/blocks/block_normal.svg",
+  "./assets/tower/blocks/block_selected.svg",
+  "./assets/tower/blocks/block_correct.svg",
+  "./assets/tower/blocks/block_wrong.svg",
+  "./assets/tower/blocks/block_cracked.svg",
+  "./assets/tower/blocks/block_locked.svg",
+  "./assets/tower/character/player_idle.svg",
+  "./assets/tower/character/player_jump.svg",
+  "./assets/tower/character/player_land.svg",
+  "./assets/tower/character/player_wrong.svg",
+  "./assets/tower/character/player_celebrate.svg",
+  "./assets/tower/background/cloud_far.svg",
+  "./assets/tower/background/cloud_near.svg",
+  "./assets/tower/background/distant_tower.svg",
+  "./assets/tower/background/floating_island.svg",
+  "./assets/tower/background/depth_fog.svg",
+  "./assets/tower/effects/landing_dust.svg",
+  "./assets/tower/effects/correct_sparkle.svg",
+  "./assets/tower/effects/wrong_crack_flash.svg",
+  "./assets/tower/effects/floor_up_glow.svg",
+  "./assets/tower/ui/star_glow.svg",
   "./vendor/phaser.min.js"
 ];
 

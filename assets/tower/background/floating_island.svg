@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 110" role="img" aria-labelledby="title">
+  <title id="title">floating island</title>
+  <ellipse cx="90" cy="39" rx="68" ry="22" fill="#8ee7ff" opacity=".7"/>
+  <path d="M35 43h110l-31 53H67Z" fill="#6b72c9" opacity=".36"/>
+  <path d="M48 34c22-22 63-22 88 0" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" opacity=".8"/>
+</svg>

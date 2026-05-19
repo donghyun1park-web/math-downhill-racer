@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 80" role="img" aria-labelledby="title">
+  <title id="title">far cloud</title>
+  <g fill="#fff" opacity=".68">
+    <ellipse cx="72" cy="49" rx="62" ry="18"/>
+    <circle cx="44" cy="39" r="22"/>
+    <circle cx="82" cy="31" r="28"/>
+    <circle cx="116" cy="42" r="20"/>
+  </g>
+</svg>
