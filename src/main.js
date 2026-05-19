@@ -230,6 +230,7 @@ const towerState = {
   previousFloorBlocks: [],
   currentFloorBlocks: [],
   nextFloorBlocks: [],
+  lastAnswerResult: null,
   roundState: "waitingForAnswer"
 };
 
@@ -507,6 +508,7 @@ function resetTowerRun(stage) {
   towerState.previousFloorBlocks = [];
   towerState.currentFloorBlocks = [];
   towerState.nextFloorBlocks = [];
+  towerState.lastAnswerResult = null;
   towerState.roundState = "waitingForAnswer";
 }
 
@@ -1794,6 +1796,7 @@ class SkyTowerScene extends Phaser.Scene {
   jumpToCorrectBlock(block) {
     towerState.roundState = "jumping";
     towerState.isJumping = true;
+    towerState.lastAnswerResult = "correct";
     towerState.combo += 1;
     towerState.bestCombo = Math.max(towerState.bestCombo, towerState.combo);
     towerState.correctAnswers += 1;
@@ -2008,15 +2011,18 @@ class SkyTowerScene extends Phaser.Scene {
 
   handleWrongBlock(block) {
     towerState.roundState = "feedback";
+    towerState.lastAnswerResult = "wrong";
+    towerState.isJumping = false;
+    towerState.floorTransition = false;
+    towerState.floorTransitionProgress = 0;
     towerState.combo = 0;
-    if (!this.isTutorial) {
-      towerState.lives = Math.max(0, towerState.lives - 1);
-    }
+    this.applyWrongAnswerPenalty();
     if (shouldRecordLearningResult(towerState.currentProblem)) {
       saveLearningStats(updateLearningStats(loadLearningStats(), towerState.currentProblem, false, towerState.stageId));
     }
     this.setBlockVisualState(block.id, "crack");
     this.createWrongFlash(block.x, block.y);
+    this.showStepDownFeedback();
     this.updateTowerPlayerState("wrong");
     feedback.trigger("wrong");
     this.cameras.main.shake(120, 0.004);
@@ -2032,14 +2038,70 @@ class SkyTowerScene extends Phaser.Scene {
         if (towerState.lives <= 0) {
           this.finishTowerRun(false, "No hearts left");
         } else {
-          this.updateTowerPlayerState("idle");
-          if (this.isTutorial) {
-            this.updateTutorialCopy("It's okay! Try again.\nPick the safe answer block.");
-          }
-          towerState.roundState = "waitingForAnswer";
+          this.continueAfterWrongAnswer({ retrySameRound: this.isTutorial });
         }
       }
     });
+  }
+
+  applyWrongAnswerPenalty() {
+    if (this.isTutorial) return;
+    towerState.lives = Math.max(0, towerState.lives - 1);
+    towerState.currentHeight = Math.max(0, towerState.currentHeight - 1);
+    towerState.floorIndex = Math.max(0, towerState.floorIndex - 1);
+  }
+
+  showStepDownFeedback() {
+    if (!this.floorFeedbackText) return;
+    this.floorFeedbackText
+      .setText("-1 STEP")
+      .setPosition(this.scale.width / 2, 214)
+      .setAlpha(1)
+      .setScale(0.76);
+    this.tweens.add({
+      targets: this.floorFeedbackText,
+      y: 248,
+      alpha: 0,
+      scale: 1.03,
+      duration: 560,
+      ease: "Sine.easeOut",
+      onComplete: () => this.floorFeedbackText?.setPosition(this.scale.width / 2, 198)
+    });
+    this.heightText?.setAngle(0);
+    this.tweens.add({
+      targets: this.heightText,
+      angle: { from: -3, to: 3 },
+      duration: 70,
+      yoyo: true,
+      repeat: 2,
+      ease: "Sine.easeInOut",
+      onComplete: () => this.heightText?.setAngle(0)
+    });
+  }
+
+  continueAfterWrongAnswer({ retrySameRound = false } = {}) {
+    towerState.selectedBlockId = null;
+    towerState.isJumping = false;
+    towerState.floorTransition = false;
+    towerState.floorTransitionProgress = 0;
+    towerState.cameraOffsetY = 0;
+    this.updateTowerPlayerState("idle");
+
+    if (retrySameRound) {
+      this.updateTutorialCopy("It's okay! Try again.\nPick the safe answer block.");
+      towerState.currentBlocks.forEach((block) => {
+        block.visualState = "normal";
+        this.updateAnswerBlockVisual(block);
+      });
+      this.updateTowerHud();
+      towerState.roundState = "waitingForAnswer";
+      this.setBlockInputEnabled(true);
+      this.updateDebugTowerStateOverlay();
+      return;
+    }
+
+    towerState.roundState = "spawningNextFloor";
+    this.time.delayedCall(180, () => this.spawnNextFloor());
   }
 
   updateTowerHud() {
@@ -2095,6 +2157,8 @@ class SkyTowerScene extends Phaser.Scene {
       `floorTransitionProgress: ${towerState.floorTransitionProgress.toFixed(2)}`,
       `cameraOffsetY: ${Math.round(towerState.cameraOffsetY)}`,
       `roundState: ${towerState.roundState}`,
+      `selectedBlockId: ${towerState.selectedBlockId || "-"}`,
+      `isJumping: ${towerState.isJumping}`,
       `currentHeight: ${towerState.currentHeight}`,
       `targetHeight: ${towerState.targetHeight}`,
       `height: ${towerState.currentHeight}/${towerState.targetHeight}`,
@@ -2102,6 +2166,7 @@ class SkyTowerScene extends Phaser.Scene {
       `blockCount: ${towerState.currentBlocks.length || this.stage?.blockCount || 0}`,
       `blockSpeed: ${(towerState.blockSpeed || 0).toFixed(2)}`,
       `easyPlaytest: ${EASY_PLAYTEST_ENABLED}`,
+      `lastAnswerResult: ${towerState.lastAnswerResult || "-"}`,
       `currentProblem: ${towerState.currentProblem?.question || "-"}`,
       `currentBlocks answers: ${currentAnswers || "-"}`
     ].join("\n"));

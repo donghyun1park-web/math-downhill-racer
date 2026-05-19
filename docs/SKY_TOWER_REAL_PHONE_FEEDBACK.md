@@ -26,6 +26,7 @@
 | ID | Severity | Device | Screen | Symptom | Cause | Fix | Status |
 |---|---|---|---|---|---|---|---|
 | RF-001 | P3 | Desktop/mobile static check | No real-phone issue recorded yet | Actual Android/iPhone hands-on testing has not been completed in this environment. | Keep this document ready for field feedback before changing gameplay. | Open |
+| P1-WRONG-ANSWER-STUCK | P1 | Real phone playtest | Gameplay | 오답 선택 후 다음 문제로 진행할 수 없음 | 오답 피드백 완료 후 입력 재활성화/새 라운드 생성 경로 누락 | 오답 시 1층 하강 후 새 문제/블록 생성 및 입력 상태 복구 | Fixed |
 
 ## Severity
 
