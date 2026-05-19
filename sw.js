@@ -1,4 +1,4 @@
-const CACHE_NAME = "math-tower-v5";
+const CACHE_NAME = "math-tower-v6";
 const CORE_ASSETS = [
   "./",
   "./index.html",

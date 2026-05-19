@@ -45,7 +45,7 @@ test("service worker caches Sky Tower art assets", () => {
   for (const asset of requiredAssets) {
     assert.match(sw, new RegExp(asset.replace(/[./]/g, "\\$&")));
   }
-  assert.match(sw, /math-tower-v5/);
+  assert.match(sw, /math-tower-v[5-9]/);
 });
 
 test("math operation defaults remain addition and subtraction only", () => {

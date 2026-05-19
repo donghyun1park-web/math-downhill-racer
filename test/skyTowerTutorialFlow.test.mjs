@@ -16,9 +16,9 @@ test("Sky Tower tutorial has its own completion key and first-run routing", () =
 test("Sky Tower tutorial defines steps, source exclusion, and completion flow", () => {
   const main = read("src/main.js");
   assert.match(main, /SKY_TOWER_TUTORIAL_STEPS/);
-  assert.match(main, /Look at the problem\. Pick the correct block!/);
-  assert.match(main, /Correct answer makes you jump higher/);
-  assert.match(main, /Moving blocks/);
+  assert.match(main, /Pick the correct block!/);
+  assert.match(main, /Correct answer = jump up!/);
+  assert.match(main, /Tap moving blocks carefully/);
   assert.match(main, /Practice Complete!/);
   assert.match(main, /source:\s*"tutorial"/);
 });

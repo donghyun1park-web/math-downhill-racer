@@ -32,9 +32,10 @@ test("debug overlays stay opt-in and available for visual QA", () => {
   assert.match(main, /debugTouch/);
   assert.match(main, /debugPerf/);
   assert.match(main, /debugStorage/);
-  assert.match(main, /new URLSearchParams\(location\.search\)\.get\("debugTouch"\)\s*===\s*"1"/);
-  assert.match(main, /new URLSearchParams\(location\.search\)\.get\("debugPerf"\)\s*===\s*"1"/);
-  assert.match(main, /new URLSearchParams\(location\.search\)\.get\("debugStorage"\)\s*===\s*"1"/);
+  assert.match(main, /URL_PARAMS\s*=\s*new URLSearchParams\(location\.search\)/);
+  assert.match(main, /URL_PARAMS\.get\("debugTouch"\)\s*===\s*"1"/);
+  assert.match(main, /URL_PARAMS\.get\("debugPerf"\)\s*===\s*"1"/);
+  assert.match(main, /URL_PARAMS\.get\("debugStorage"\)\s*===\s*"1"/);
 });
 
 test("math defaults and deployment cache version are preserved", () => {
