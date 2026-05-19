@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 112" role="img" aria-labelledby="title">
+  <title id="title">translucent 3D glass block locked</title>
+  <path d="M28 30 L62 12 H152 L122 30 Z" fill="#d6ddec" opacity=".42"/>
+  <path d="M28 30 H122 V78 H28 Z" fill="#586887" opacity=".45"/>
+  <path d="M122 30 L152 12 V60 L122 78 Z" fill="#35415d" opacity=".45"/>
+  <path d="M26 29 L61 10 H154 L124 30 H26 V80 H124 L154 61 V10" fill="none" stroke="#aeb9d8" stroke-width="5" opacity=".62"/>
+  <rect x="70" y="43" width="40" height="28" rx="7" fill="#1f2d4f" opacity=".56"/>
+  <path d="M78 43 v-8 c0-16 24-16 24 0 v8" fill="none" stroke="#dce7ff" stroke-width="6" stroke-linecap="round" opacity=".72"/>
+  <ellipse cx="90" cy="94" rx="62" ry="12" fill="#16213f" opacity=".24"/>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 112" role="img" aria-labelledby="title">
+  <title id="title">translucent 3D glass block wrong</title>
+  <path d="M28 30 L62 12 H152 L122 30 Z" fill="#ffe2ee" opacity=".78"/>
+  <path d="M28 30 H122 V78 H28 Z" fill="#ff7b9a" opacity=".58"/>
+  <path d="M122 30 L152 12 V60 L122 78 Z" fill="#d94f7c" opacity=".48"/>
+  <path d="M26 29 L61 10 H154 L124 30 H26 V80 H124 L154 61 V10" fill="none" stroke="#ff506f" stroke-width="7" opacity=".86"/>
+  <path d="M62 38 l48 32 M110 38 L62 70" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".72"/>
+  <ellipse cx="90" cy="94" rx="70" ry="14" fill="#ff3f66" opacity=".24"/>
+</svg>

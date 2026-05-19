@@ -1,4 +1,4 @@
-const CACHE_NAME = "math-tower-v7";
+const CACHE_NAME = "math-tower-v8";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -73,6 +73,12 @@ const CORE_ASSETS = [
   "./assets/tower/blocks/block_wrong.svg",
   "./assets/tower/blocks/block_cracked.svg",
   "./assets/tower/blocks/block_locked.svg",
+  "./assets/tower/blocks/block_glass_normal.svg",
+  "./assets/tower/blocks/block_glass_selected.svg",
+  "./assets/tower/blocks/block_glass_correct.svg",
+  "./assets/tower/blocks/block_glass_wrong.svg",
+  "./assets/tower/blocks/block_glass_cracked.svg",
+  "./assets/tower/blocks/block_glass_locked.svg",
   "./assets/tower/character/player_idle.svg",
   "./assets/tower/character/player_jump.svg",
   "./assets/tower/character/player_land.svg",
@@ -83,6 +89,11 @@ const CORE_ASSETS = [
   "./assets/tower/background/distant_tower.svg",
   "./assets/tower/background/floating_island.svg",
   "./assets/tower/background/depth_fog.svg",
+  "./assets/tower/background/ground_hills.svg",
+  "./assets/tower/background/cloud_band.svg",
+  "./assets/tower/background/upper_sky_glow.svg",
+  "./assets/tower/background/star_field.svg",
+  "./assets/tower/background/moon_or_planet_far.svg",
   "./assets/tower/effects/landing_dust.svg",
   "./assets/tower/effects/correct_sparkle.svg",
   "./assets/tower/effects/wrong_crack_flash.svg",

@@ -188,6 +188,12 @@ const ASSETS = {
   towerBlockWrong: "assets/tower/blocks/block_wrong.svg",
   towerBlockCracked: "assets/tower/blocks/block_cracked.svg",
   towerBlockLocked: "assets/tower/blocks/block_locked.svg",
+  towerBlockGlassNormal: "assets/tower/blocks/block_glass_normal.svg",
+  towerBlockGlassSelected: "assets/tower/blocks/block_glass_selected.svg",
+  towerBlockGlassCorrect: "assets/tower/blocks/block_glass_correct.svg",
+  towerBlockGlassWrong: "assets/tower/blocks/block_glass_wrong.svg",
+  towerBlockGlassCracked: "assets/tower/blocks/block_glass_cracked.svg",
+  towerBlockGlassLocked: "assets/tower/blocks/block_glass_locked.svg",
   towerPlayerIdle: "assets/tower/character/player_idle.svg",
   towerPlayerJump: "assets/tower/character/player_jump.svg",
   towerPlayerLand: "assets/tower/character/player_land.svg",
@@ -198,6 +204,11 @@ const ASSETS = {
   towerDistantTower: "assets/tower/background/distant_tower.svg",
   towerFloatingIsland: "assets/tower/background/floating_island.svg",
   towerDepthFog: "assets/tower/background/depth_fog.svg",
+  towerGroundHills: "assets/tower/background/ground_hills.svg",
+  towerCloudBand: "assets/tower/background/cloud_band.svg",
+  towerUpperSkyGlow: "assets/tower/background/upper_sky_glow.svg",
+  towerStarField: "assets/tower/background/star_field.svg",
+  towerMoonOrPlanetFar: "assets/tower/background/moon_or_planet_far.svg",
   towerLandingDust: "assets/tower/effects/landing_dust.svg",
   towerCorrectSparkle: "assets/tower/effects/correct_sparkle.svg",
   towerWrongCrackFlash: "assets/tower/effects/wrong_crack_flash.svg",
@@ -693,6 +704,12 @@ class BootScene extends Phaser.Scene {
     this.load.svg("towerBlockWrong", ASSETS.towerBlockWrong);
     this.load.svg("towerBlockCracked", ASSETS.towerBlockCracked);
     this.load.svg("towerBlockLocked", ASSETS.towerBlockLocked);
+    this.load.svg("towerBlockGlassNormal", ASSETS.towerBlockGlassNormal);
+    this.load.svg("towerBlockGlassSelected", ASSETS.towerBlockGlassSelected);
+    this.load.svg("towerBlockGlassCorrect", ASSETS.towerBlockGlassCorrect);
+    this.load.svg("towerBlockGlassWrong", ASSETS.towerBlockGlassWrong);
+    this.load.svg("towerBlockGlassCracked", ASSETS.towerBlockGlassCracked);
+    this.load.svg("towerBlockGlassLocked", ASSETS.towerBlockGlassLocked);
     this.load.svg("towerPlayerIdle", ASSETS.towerPlayerIdle);
     this.load.svg("towerPlayerJump", ASSETS.towerPlayerJump);
     this.load.svg("towerPlayerLand", ASSETS.towerPlayerLand);
@@ -703,6 +720,11 @@ class BootScene extends Phaser.Scene {
     this.load.svg("towerDistantTower", ASSETS.towerDistantTower);
     this.load.svg("towerFloatingIsland", ASSETS.towerFloatingIsland);
     this.load.svg("towerDepthFog", ASSETS.towerDepthFog);
+    this.load.svg("towerGroundHills", ASSETS.towerGroundHills);
+    this.load.svg("towerCloudBand", ASSETS.towerCloudBand);
+    this.load.svg("towerUpperSkyGlow", ASSETS.towerUpperSkyGlow);
+    this.load.svg("towerStarField", ASSETS.towerStarField);
+    this.load.svg("towerMoonOrPlanetFar", ASSETS.towerMoonOrPlanetFar);
     this.load.svg("towerLandingDust", ASSETS.towerLandingDust);
     this.load.svg("towerCorrectSparkle", ASSETS.towerCorrectSparkle);
     this.load.svg("towerWrongCrackFlash", ASSETS.towerWrongCrackFlash);
@@ -1351,21 +1373,89 @@ class SkyTowerScene extends Phaser.Scene {
     return this.textures?.exists(key);
   }
 
+  getAltitudeProgress() {
+    const target = Math.max(1, towerState.targetHeight || 1);
+    const transitionLift = towerState.floorTransition ? towerState.floorTransitionProgress * 0.35 : 0;
+    return Phaser.Math.Clamp((towerState.currentHeight + transitionLift) / target, 0, 1);
+  }
+
+  getBackgroundZone(progress = this.getAltitudeProgress()) {
+    if (progress < 0.2) return "Ground / Low Sky";
+    if (progress < 0.45) return "Bright Sky";
+    if (progress < 0.7) return "Cloud Layer";
+    if (progress < 0.9) return "Upper Sky / Stratosphere";
+    return "Space Edge";
+  }
+
+  mixColor(from, to, t) {
+    const clamped = Phaser.Math.Clamp(t, 0, 1);
+    const fr = (from >> 16) & 255;
+    const fg = (from >> 8) & 255;
+    const fb = from & 255;
+    const tr = (to >> 16) & 255;
+    const tg = (to >> 8) & 255;
+    const tb = to & 255;
+    const r = Math.round(Phaser.Math.Linear(fr, tr, clamped));
+    const g = Math.round(Phaser.Math.Linear(fg, tg, clamped));
+    const b = Math.round(Phaser.Math.Linear(fb, tb, clamped));
+    return (r << 16) | (g << 8) | b;
+  }
+
+  updateAltitudeBackground(progress = this.getAltitudeProgress()) {
+    return {
+      progress,
+      zone: this.getBackgroundZone(progress),
+      top: this.mixColor(0x7ed9ff, 0x20124d, Math.max(0, progress - 0.52) / 0.48),
+      middle: this.mixColor(0xc8f4ff, 0x4158d0, Math.max(0, progress - 0.42) / 0.58),
+      bottom: this.mixColor(0xf7fff8, 0x140f34, Math.max(0, progress - 0.72) / 0.28)
+    };
+  }
+
   drawSkyTowerBackground() {
     const { width, height } = this.scale;
     const climbShift = towerState.cameraOffsetY || 0;
+    const altitude = this.updateAltitudeBackground();
+    const progress = altitude.progress;
     this.world.clear();
-    this.world.fillGradientStyle(0x65cfff, 0xbceeff, 0xf5fdff, 0x8bb7ff, 1);
+    // ground-to-space altitude background progression: Ground / Low Sky -> Bright Sky -> Cloud Layer -> Upper Sky / Stratosphere -> Space Edge.
+    this.world.fillGradientStyle(altitude.top, altitude.top, altitude.bottom, altitude.middle, 1);
     this.world.fillRect(0, 0, width, height);
-    this.world.fillStyle(0xffffff, 0.32);
+
+    const sunAlpha = Phaser.Math.Linear(0.38, 0.1, Math.min(progress, 0.8));
+    this.world.fillStyle(0xffffff, sunAlpha);
     this.world.fillCircle(width * 0.84, height * 0.13 + climbShift * 0.08, 44);
-    this.world.fillStyle(0x4e77c9, 0.16);
-    this.world.fillTriangle(width * 0.04, height * 0.84 + climbShift * 0.12, width * 0.2, height * 0.55 + climbShift * 0.12, width * 0.38, height * 0.84 + climbShift * 0.12);
-    this.world.fillTriangle(width * 0.62, height * 0.86 + climbShift * 0.12, width * 0.82, height * 0.48 + climbShift * 0.12, width * 1.06, height * 0.86 + climbShift * 0.12);
-    this.world.fillStyle(0x7157c9, 0.18);
+
+    const groundAlpha = Phaser.Math.Clamp(1 - progress * 4, 0, 0.34);
+    if (groundAlpha > 0) {
+      this.world.fillStyle(0x3f7e6f, groundAlpha);
+      this.world.fillTriangle(width * 0.04, height * 0.86 + climbShift * 0.16, width * 0.2, height * 0.58 + climbShift * 0.16, width * 0.4, height * 0.86 + climbShift * 0.16);
+      this.world.fillTriangle(width * 0.58, height * 0.87 + climbShift * 0.16, width * 0.82, height * 0.5 + climbShift * 0.16, width * 1.08, height * 0.87 + climbShift * 0.16);
+    }
+
+    const cloudBandAlpha = Phaser.Math.Clamp(1 - Math.abs(progress - 0.56) * 2.8, 0, 0.48);
+    if (cloudBandAlpha > 0) {
+      this.world.fillStyle(0xffffff, cloudBandAlpha);
+      this.world.fillEllipse(width * 0.5, height * 0.62 + climbShift * 0.28, width * 0.96, 58);
+      this.world.fillEllipse(width * 0.12, height * 0.7 + climbShift * 0.24, 180, 44);
+      this.world.fillEllipse(width * 0.9, height * 0.69 + climbShift * 0.24, 170, 42);
+    }
+
+    const spaceAlpha = Phaser.Math.Clamp((progress - 0.72) / 0.28, 0, 1);
+    if (spaceAlpha > 0) {
+      this.world.fillStyle(0xfff6b8, spaceAlpha * 0.8);
+      for (let i = 0; i < 18; i += 1) {
+        const x = (i * 73 + towerState.currentHeight * 19) % width;
+        const y = 34 + ((i * 47) % Math.floor(height * 0.54));
+        this.world.fillCircle(x, y, i % 4 === 0 ? 2.1 : 1.25);
+      }
+      this.world.fillStyle(0xd8e5ff, spaceAlpha * 0.26);
+      this.world.fillCircle(width * 0.18, height * 0.18 + climbShift * 0.05, 32);
+    }
+
+    this.world.fillStyle(0x7157c9, Phaser.Math.Linear(0.18, 0.08, progress));
     this.world.fillRoundedRect(width * 0.69, height * 0.47 + climbShift * 0.2, 34, height * 0.22, 7);
     this.world.fillTriangle(width * 0.69, height * 0.47 + climbShift * 0.2, width * 0.735, height * 0.39 + climbShift * 0.2, width * 0.78, height * 0.47 + climbShift * 0.2);
-    this.world.fillStyle(0xffffff, 0.58);
+    this.world.fillStyle(0xffffff, Phaser.Math.Linear(0.5, 0.28, progress));
     this.world.fillEllipse(width * 0.75, height * 0.7 + climbShift * 0.28, 132, 32);
     this.drawDepthFog();
   }
@@ -1660,6 +1750,7 @@ class SkyTowerScene extends Phaser.Scene {
     const g = this.add.graphics();
     const artKey = this.getTowerBlockTextureKey(block.visualState);
     const art = this.hasTexture(artKey) ? this.add.image(0, 0, artKey).setDisplaySize(TOWER_BLOCK_VISUAL_WIDTH, TOWER_BLOCK_VISUAL_HEIGHT) : null;
+    const shadow = this.createBlockShadow(block);
     if (art) {
       g.setVisible(false);
     } else {
@@ -1684,7 +1775,8 @@ class SkyTowerScene extends Phaser.Scene {
         this.setBlockVisualState(block.id, "normal");
       }
     });
-    container.add(art ? [art, g, label, zone] : [g, label, zone]);
+    container.add(art ? [shadow, art, g, label, zone] : [shadow, g, label, zone]);
+    block.shadow = shadow;
     block.art = art;
     block.graphic = g;
     block.label = label;
@@ -1699,6 +1791,25 @@ class SkyTowerScene extends Phaser.Scene {
       ease: "Back.easeOut"
     });
     return container;
+  }
+
+  createBlockShadow(block) {
+    const shadow = this.add.graphics();
+    block.shadow = shadow;
+    this.updateBlockShadow(block);
+    return shadow;
+  }
+
+  updateBlockShadow(block) {
+    if (!block?.shadow) return;
+    const progress = this.getAltitudeProgress();
+    const glowColor = progress > 0.72 ? 0x8c7cff : progress > 0.45 ? 0x68d8ff : 0x3f79d8;
+    const alpha = block.visualState === "correct" ? 0.34 : block.visualState === "selected" ? 0.3 : 0.2;
+    block.shadow.clear();
+    block.shadow.fillStyle(glowColor, alpha);
+    block.shadow.fillEllipse(0, 43, TOWER_BLOCK_VISUAL_WIDTH * 0.82, 20);
+    block.shadow.fillStyle(0xffffff, block.visualState === "correct" ? 0.18 : 0.08);
+    block.shadow.fillEllipse(0, 38, TOWER_BLOCK_VISUAL_WIDTH * 0.56, 10);
   }
 
   createBlockHitZone(block) {
@@ -1720,7 +1831,17 @@ class SkyTowerScene extends Phaser.Scene {
   }
 
   getTowerBlockTextureKey(visualState) {
-    if (visualState === "selected") return "towerBlockSelected";
+    const glassKey = {
+      hover: "towerBlockGlassSelected",
+      selected: "towerBlockGlassSelected",
+      correct: "towerBlockGlassCorrect",
+      wrong: "towerBlockGlassWrong",
+      crack: "towerBlockGlassCracked",
+      locked: "towerBlockGlassLocked",
+      normal: "towerBlockGlassNormal"
+    }[visualState || "normal"];
+    if (this.hasTexture(glassKey)) return glassKey;
+    if (visualState === "selected" || visualState === "hover") return "towerBlockSelected";
     if (visualState === "correct") return "towerBlockCorrect";
     if (visualState === "wrong") return "towerBlockWrong";
     if (visualState === "crack") return "towerBlockCracked";
@@ -1755,9 +1876,11 @@ class SkyTowerScene extends Phaser.Scene {
       const key = this.getTowerBlockTextureKey(block.visualState);
       if (this.hasTexture(key)) block.art.setTexture(key);
     } else {
-      this.drawFloatingBlock(block.graphic || block.container.list[0], block);
+      this.drawFloatingBlock(block.graphic, block);
     }
+    this.updateBlockShadow(block);
     block.label?.setColor(block.visualState === "wrong" || block.visualState === "crack" ? "#ffffff" : "#17345f");
+    block.label?.setStroke(block.visualState === "wrong" || block.visualState === "crack" ? "#17345f" : "#ffffff", 6);
     block.label?.setScale(block.visualState === "selected" ? 1.08 : 1);
   }
 

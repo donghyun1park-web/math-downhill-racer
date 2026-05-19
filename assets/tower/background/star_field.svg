@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 260" role="img" aria-labelledby="title">
+  <title id="title">friendly star field</title>
+  <g fill="#fff6b8">
+    <circle cx="34" cy="36" r="2.8"/>
+    <circle cx="96" cy="88" r="1.8"/>
+    <circle cx="156" cy="42" r="2.2"/>
+    <circle cx="228" cy="106" r="2.5"/>
+    <circle cx="310" cy="54" r="1.9"/>
+    <circle cx="382" cy="130" r="2.6"/>
+    <circle cx="70" cy="184" r="2"/>
+    <circle cx="190" cy="202" r="1.7"/>
+    <circle cx="284" cy="176" r="2.4"/>
+  </g>
+  <g stroke="#dff7ff" stroke-width="2" stroke-linecap="round" opacity=".8">
+    <path d="M350 28 l8 8 m0-8 l-8 8"/>
+    <path d="M122 146 l7 7 m0-7 l-7 7"/>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 112" role="img" aria-labelledby="title">
+  <title id="title">translucent 3D glass block cracked</title>
+  <path d="M28 30 L62 12 H152 L122 30 Z" fill="#f0fbff" opacity=".58"/>
+  <path d="M28 30 H122 V78 H28 Z" fill="#8bb6d8" opacity=".48"/>
+  <path d="M122 30 L152 12 V60 L122 78 Z" fill="#746cff" opacity=".34"/>
+  <path d="M26 29 L61 10 H154 L124 30 H26 V80 H124 L154 61 V10" fill="none" stroke="#ff5d73" stroke-width="6" opacity=".84"/>
+  <path d="M82 20 l-12 22 16 10 -18 28 M104 32 l-18 16 20 18 M56 40 l20 10" fill="none" stroke="#7b1834" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".88"/>
+  <ellipse cx="90" cy="94" rx="66" ry="13" fill="#223364" opacity=".22"/>
+</svg>

@@ -109,6 +109,34 @@ Forbidden direction:
 - The background should not be too dark.
 - Decorative detail must never make answer numbers hard to read.
 
+## Altitude Background Progression
+
+The climb should visibly move from ground to sky to space as the player gains height. The background should not cut between scenes; it should softly interpolate color, cloud density, and distant elements based on `currentHeight / targetHeight`.
+
+Altitude zones:
+
+- Ground / Low Sky: green hills, low clouds, bright beginner-friendly sky.
+- Bright Sky: clearer blue sky with the ground fading below.
+- Cloud Layer: larger cloud bands and floating islands make the tower feel high.
+- Upper Sky / Stratosphere: deeper blue, fewer clouds, subtle glow.
+- Space Edge: friendly navy/purple sky, small stars, and a distant moon or planet. It must stay playful, not scary.
+
+The purpose of altitude background progression is to make every correct answer feel like a real climb, not just a number changing.
+
+## Translucent 3D Glass Block Direction
+
+Answer blocks should look like translucent 3D glass block platforms rather than flat panels. Each block should show a top face, front face, side face, rim highlight, and soft shadow/glow underneath.
+
+Rules:
+
+- Numbers remain Phaser Text, never baked into SVG art.
+- The text must stay readable before and after state changes.
+- Normal blocks use light cyan/mint/purple glass.
+- Selected blocks gain bright white or gold rim light.
+- Correct blocks glow green/gold with sparkle effects.
+- Wrong and cracked blocks show red warning tint and crack lines.
+- Existing flat block SVGs remain fallback assets.
+
 ## Graphics Direction
 
 The first playable pass uses Phaser Graphics:
